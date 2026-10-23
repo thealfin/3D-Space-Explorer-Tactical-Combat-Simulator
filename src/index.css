@@ -5,8 +5,54 @@
 html, body, #root {
   width: 100%;
   height: 100%;
+  height: 100dvh;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
   background-color: #050816;
+}
+
+/* Automatic scaling adjustments for smartphone landscape orientation */
+@media (max-height: 540px) and (orientation: landscape) {
+  .mobile-landscape-compact-header {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .mobile-landscape-shrink-tl {
+    transform: scale(0.74);
+    transform-origin: top left;
+  }
+
+  .mobile-landscape-shrink-tc {
+    transform: scale(0.74);
+    transform-origin: top center;
+  }
+
+  .mobile-landscape-shrink-tr {
+    transform: scale(0.82);
+    transform-origin: top right;
+  }
+
+  .mobile-landscape-shrink-bl {
+    transform: scale(0.66);
+    transform-origin: bottom left;
+    max-width: 17.5rem !important;
+  }
+
+  .mobile-landscape-shrink-br {
+    transform: scale(0.68);
+    transform-origin: bottom right;
+  }
+
+  .mobile-landscape-shrink-center {
+    transform: scale(0.72);
+    transform-origin: center center;
+  }
 }

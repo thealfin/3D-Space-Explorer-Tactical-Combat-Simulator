@@ -7,10 +7,10 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import {
   Rocket, Compass, Shield, Zap, Settings, User, Award, Play, Pause,
-  RotateCcw, Volume2, VolumeX, Eye, Crosshair, Navigation, Cpu,
+  RotateCcw, Volume2, VolumeX, Eye, EyeOff, Crosshair, Navigation, Cpu,
   CheckCircle2, AlertTriangle, Lock, Unlock, ChevronRight, Sparkles,
   Sliders, HelpCircle, Globe, Disc, Radio, RefreshCw, Layers, Gauge,
-  Maximize2, Terminal, ArrowUpRight, Info, Check, X, Activity, Flame,
+  Maximize2, Minimize2, Terminal, ArrowUpRight, Info, Check, X, Activity, Flame,
   Download, ChevronDown
 } from 'lucide-react';
 
@@ -2337,9 +2337,69 @@ export default function SpaceExplorer3D() {
   const [activeScreen, setActiveScreen] = useState('main_menu');
   const [isPaused, setIsPaused] = useState(false);
   const [cameraMode, setCameraMode] = useState('CHASE'); // 'CHASE' | 'COCKPIT' | 'CINEMATIC' | 'FREE_LOOK'
-  const [showTutorial, setShowTutorial] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(() =>
+    typeof window !== 'undefined' ? window.innerHeight > 540 : true
+  );
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [remappingAction, setRemappingAction] = useState(null);
+
+  // 4-Stage HUD Visibility Mode:
+  // 'full'         -> All widgets + Header visible
+  // 'no_stats'     -> Left telemetry/weapons box & Header hidden
+  // 'no_stats_map' -> Left telemetry/weapons box, Header & Tactical Radar hidden
+  // 'full_hide'    -> Full hide including Header (only Pause, ? & HUD/Fullscreen controls remain)
+  const [hudMode, setHudMode] = useState<'full' | 'no_stats' | 'no_stats_map' | 'full_hide'>('full');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobileLandscape, setIsMobileLandscape] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth > window.innerHeight && window.innerHeight <= 540 : false
+  );
+
+  // Detect Mobile Landscape orientation & Fullscreen state changes
+  useEffect(() => {
+    const checkViewport = () => {
+      const mobileLand = window.innerWidth > window.innerHeight && window.innerHeight <= 540;
+      setIsMobileLandscape(mobileLand);
+    };
+    const onFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+    };
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+    window.addEventListener('orientationchange', checkViewport);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => {
+      window.removeEventListener('resize', checkViewport);
+      window.removeEventListener('orientationchange', checkViewport);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    audioSystem.playUIClick();
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Ignore browser fullscreen permission errors
+    }
+  }, []);
+
+  const cycleHudMode = useCallback(() => {
+    audioSystem.playUIClick();
+    setHudMode((prev) => {
+      const order: Array<'full' | 'no_stats' | 'no_stats_map' | 'full_hide'> = [
+        'full',
+        'no_stats',
+        'no_stats_map',
+        'full_hide'
+      ];
+      return order[(order.indexOf(prev) + 1) % order.length];
+    });
+  }, []);
 
   // Pre-Launch Telemetry & Planetary Control State (matching Desain UI.jpg)
   const [selectedSectorId, setSelectedSectorId] = useState('alpha');
@@ -3667,12 +3727,17 @@ export default function SpaceExplorer3D() {
           const order = ['CHASE', 'COCKPIT', 'CINEMATIC', 'FREE_LOOK'];
           return order[(order.indexOf(prev) + 1) % order.length];
         });
-      } else if (e.code === 'Tab' && s.isPlaying) {
+      } else if ((e.code === 'Tab' || e.code === 'KeyH') && s.isPlaying) {
         e.preventDefault();
-        updateSaveData((prev) => ({
-          ...prev,
-          settings: { ...prev.settings, hudVisible: !prev.settings.hudVisible }
-        }));
+        setHudMode((prev) => {
+          const order: Array<'full' | 'no_stats' | 'no_stats_map' | 'full_hide'> = [
+            'full',
+            'no_stats',
+            'no_stats_map',
+            'full_hide'
+          ];
+          return order[(order.indexOf(prev) + 1) % order.length];
+        });
       }
     };
 
@@ -5074,10 +5139,12 @@ export default function SpaceExplorer3D() {
       {/* 3D WebGL Canvas Mount */}
       <div ref={mountRef} className="absolute inset-0 w-full h-full z-0" />
 
-      {/* Screen-Space 3D Target Waypoint Marker */}
+      {/* Screen-Space 3D Target Waypoint Marker (Hidden in 'full_hide' mode) */}
       <div
         ref={(el) => (hudRefs.current.waypointOverlay = el)}
-        className="pointer-events-none fixed top-0 left-0 z-10 transition-opacity duration-150"
+        className={`pointer-events-none fixed top-0 left-0 z-10 transition-opacity duration-150 ${
+          hudMode === 'full_hide' ? 'hidden' : ''
+        }`}
         style={{ opacity: 0 }}
       />
 
@@ -5134,30 +5201,32 @@ export default function SpaceExplorer3D() {
         </div>
       )}
 
-      {/* Top Global Telemetry & Navigation Bar (Adapts to Desain UI.jpg in Pre-Launch) */}
+      {/* Top Global Telemetry & Navigation Bar (Hidden in non-full HUD flight modes) */}
       <header
-        className="relative z-30 flex flex-wrap items-center justify-between gap-2 px-6 py-2.5 border-b backdrop-blur-md"
+        className={`relative z-30 flex flex-wrap items-center justify-between gap-2 px-6 py-2.5 border-b backdrop-blur-md mobile-landscape-compact-header ${
+          activeScreen === 'playing' && hudMode !== 'full' ? 'hidden' : ''
+        }`}
         style={{
           backgroundColor: activeScreen === 'main_menu' ? 'rgba(3, 5, 10, 0.92)' : 'rgba(8, 12, 24, 0.88)',
           borderColor: 'rgba(0, 168, 255, 0.14)'
         }}
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => {
               audioSystem.playUIClick();
               setIsPaused(false);
               setActiveScreen('main_menu');
             }}
-            className="flex items-center gap-2.5 group text-left cursor-pointer"
+            className="flex items-center gap-2 group text-left cursor-pointer"
           >
             <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: '#00a8ff', boxShadow: '0 0 8px #00a8ff' }} />
-            <span className="text-[11px] font-mono tracking-[0.22em] text-slate-200 uppercase">
+            <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.2em] text-slate-200 uppercase">
               INTEGRITY: <strong className="text-white">{Math.round((saveData.ships[currentShipSpec.id]?.unlocked ? 100 : 100))}%</strong>
             </span>
           </button>
 
-          <div className="hidden sm:flex items-center gap-2 pl-4 border-l border-slate-800 text-[11px] font-mono text-slate-400">
+          <div className="hidden sm:flex items-center gap-2 pl-3 sm:pl-4 border-l border-slate-800 text-[10px] sm:text-[11px] font-mono text-slate-400">
             <span>CALLSIGN: <strong className="text-slate-200">{saveData.pilotProfile.callsign}</strong></span>
             <span className="text-slate-600">//</span>
             <span style={{ color: '#00a8ff' }}>{saveData.pilotProfile.credits.toLocaleString()} CR</span>
@@ -5166,7 +5235,7 @@ export default function SpaceExplorer3D() {
 
         {/* Center Navigation Pills when outside Main Menu */}
         {activeScreen !== 'main_menu' && (
-          <nav className="flex items-center gap-1 bg-[#060a14]/90 border border-slate-800/80 px-1.5 py-1 rounded-full">
+          <nav className="flex items-center gap-1 bg-[#060a14]/90 border border-slate-800/80 px-1.5 py-0.5 sm:py-1 rounded-full">
             {[
               { id: 'main_menu', label: 'DECK', icon: Activity },
               { id: 'hangar', label: 'SPECS', icon: Sliders },
@@ -5185,7 +5254,7 @@ export default function SpaceExplorer3D() {
                     setIsPaused(false);
                     setActiveScreen(tab.id);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono tracking-wider transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-mono tracking-wider transition-all cursor-pointer"
                   style={{
                     backgroundColor: active ? '#0088ff' : 'transparent',
                     color: active ? '#ffffff' : '#8b9bb4',
@@ -5200,8 +5269,22 @@ export default function SpaceExplorer3D() {
           </nav>
         )}
 
-        {/* Right Telemetry Actions */}
-        <div className="flex items-center gap-2.5">
+        {/* Right Telemetry Actions (Audio Mute & Fullscreen Toggle) */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleFullscreen}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono font-semibold tracking-wider transition-colors cursor-pointer"
+            style={{ backgroundColor: '#090e1a', borderColor: 'rgba(0, 168, 255, 0.3)', color: '#00a8ff' }}
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen Mode'}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="w-3.5 h-3.5" />
+            ) : (
+              <Maximize2 className="w-3.5 h-3.5" />
+            )}
+            <span className="hidden sm:inline">{isFullscreen ? 'EXIT FULL' : 'FULLSCREEN'}</span>
+          </button>
+
           <button
             onClick={() => {
               updateSaveData((prev) => ({
@@ -5824,12 +5907,24 @@ export default function SpaceExplorer3D() {
       {/* VIEW 2: ACTIVE FLIGHT HUD & COCKPIT OVERLAY                          */}
       {/* ==================================================================== */}
       {activeScreen === 'playing' && saveData.settings.hudVisible && (
-        <div className="relative z-20 pointer-events-none h-[calc(100vh-57px)] flex flex-col justify-between p-4 md:p-6">
-          {/* Top HUD Row: Sector Telemetry, Active Mission & Camera Controls */}
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            {/* Sector & Coordinates */}
+        <div
+          className={`relative z-20 pointer-events-none flex flex-col justify-between ${
+            hudMode === 'full'
+              ? isMobileLandscape
+                ? 'h-[calc(100dvh-38px)] p-2'
+                : 'h-[calc(100dvh-57px)] p-4 md:p-6'
+              : isMobileLandscape
+              ? 'h-screen p-2'
+              : 'h-screen p-4 md:p-6'
+          }`}
+        >
+          {/* Top HUD Row: Sector Telemetry, Active Mission & Camera / HUD / Fullscreen / Pause Controls */}
+          <div className="flex flex-wrap items-start justify-between gap-2 sm:gap-3">
+            {/* Sector & Coordinates (Hidden in 'full_hide') */}
             <div
-              className="px-4 py-2.5 rounded-xl border backdrop-blur-md pointer-events-auto"
+              className={`px-3 sm:px-4 py-2 rounded-xl border backdrop-blur-md pointer-events-auto mobile-landscape-shrink-tl ${
+                hudMode === 'full_hide' ? 'hidden' : ''
+              }`}
               style={{ backgroundColor: 'rgba(13, 20, 40, 0.78)', borderColor: 'rgba(73, 217, 255, 0.25)' }}
             >
               <div
@@ -5848,10 +5943,12 @@ export default function SpaceExplorer3D() {
               </div>
             </div>
 
-            {/* Active Mission Objective Panel */}
+            {/* Active Mission Objective Panel (Hidden in 'full_hide') */}
             {activeMission && (
               <div
-                className="px-4 py-3 rounded-xl border backdrop-blur-md max-w-sm pointer-events-auto"
+                className={`px-3.5 py-2.5 rounded-xl border backdrop-blur-md max-w-sm pointer-events-auto mobile-landscape-shrink-tc ${
+                  hudMode === 'full_hide' ? 'hidden' : ''
+                }`}
                 style={{ backgroundColor: 'rgba(13, 20, 40, 0.88)', borderColor: '#7C5CFF' }}
               >
                 <div className="flex items-center justify-between gap-4 mb-1">
@@ -5877,7 +5974,7 @@ export default function SpaceExplorer3D() {
                       simRef.current.RebuildMissionObjects?.(null);
                       setActiveMission(null);
                     }}
-                    className="text-[11px] underline hover:text-white"
+                    className="text-[11px] underline hover:text-white cursor-pointer"
                     style={{ color: '#FF5D73' }}
                   >
                     Abort
@@ -5886,8 +5983,12 @@ export default function SpaceExplorer3D() {
               </div>
             )}
 
-            {/* Heading Compass Tape (Azimuth Indicator 0°..359°) */}
-            <div className="hidden sm:flex flex-col items-center pointer-events-none mx-auto">
+            {/* Heading Compass Tape (Azimuth Indicator 0°..359°, Hidden in 'full_hide') */}
+            <div
+              className={`flex-col items-center pointer-events-none mx-auto mobile-landscape-shrink-tc ${
+                hudMode === 'full_hide' ? 'hidden' : 'hidden sm:flex'
+              }`}
+            >
               <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-t-lg border-t border-x backdrop-blur-md" style={{ backgroundColor: 'rgba(13, 20, 40, 0.85)', borderColor: 'rgba(73, 217, 255, 0.3)' }}>
                 <span className="text-[10px] font-mono tracking-wider" style={{ color: '#49D9FF' }}>HDG</span>
                 <span ref={(el) => (hudRefs.current.compassDegrees = el)} className="text-xs font-mono font-bold text-white">000°</span>
@@ -5910,45 +6011,106 @@ export default function SpaceExplorer3D() {
               </div>
             </div>
 
-            {/* Camera & Pause Action Buttons */}
-            <div className="flex items-center gap-2 pointer-events-auto">
+            {/* Top-Right Action Buttons (Pinned to Top-Right via ml-auto) */}
+            <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto ml-auto mobile-landscape-shrink-tr">
+              {/* Camera Switcher (Hidden in 'full_hide') */}
               <button
                 onClick={() => {
                   audioSystem.playUIClick();
                   const order = ['CHASE', 'COCKPIT', 'CINEMATIC', 'FREE_LOOK'];
                   setCameraMode((prev) => order[(order.indexOf(prev) + 1) % order.length]);
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold backdrop-blur-md"
+                className={`items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold backdrop-blur-md cursor-pointer ${
+                  hudMode === 'full_hide' ? 'hidden' : 'flex'
+                }`}
                 style={{ backgroundColor: 'rgba(13, 20, 40, 0.8)', borderColor: 'rgba(73, 217, 255, 0.3)' }}
+                title="Cycle Camera Mode [C]"
               >
                 <Eye className="w-3.5 h-3.5" style={{ color: '#49D9FF' }} />
                 <span>CAM: {cameraMode}</span>
               </button>
+
+              {/* 4-Stage HUD Visibility Mode Switcher */}
               <button
-                onClick={() => setShowTutorial((t) => !t)}
-                className="p-2 rounded-xl border backdrop-blur-md"
-                style={{ backgroundColor: 'rgba(13, 20, 40, 0.8)', borderColor: 'rgba(154, 168, 199, 0.25)' }}
+                onClick={cycleHudMode}
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-xs font-semibold backdrop-blur-md cursor-pointer transition-colors"
+                style={{
+                  backgroundColor: hudMode === 'full_hide' ? 'rgba(13, 20, 40, 0.65)' : 'rgba(13, 20, 40, 0.8)',
+                  borderColor: hudMode === 'full' ? 'rgba(73, 217, 255, 0.3)' : 'rgba(72, 224, 164, 0.45)',
+                  color: hudMode === 'full' ? '#F4F7FF' : '#48E0A4'
+                }}
+                title="Cycle HUD Visibility Mode (Full -> Hide Stats/Header -> Hide Map -> Full Hide) [H / Tab]"
+              >
+                {hudMode === 'full_hide' ? (
+                  <EyeOff className="w-4 h-4" style={{ color: '#9AA8C7' }} />
+                ) : (
+                  <>
+                    <Layers className="w-3.5 h-3.5" style={{ color: '#48E0A4' }} />
+                    <span className="text-[10px] font-mono">
+                      {hudMode === 'full'
+                        ? 'HUD: FULL'
+                        : hudMode === 'no_stats'
+                        ? 'HUD: MIN'
+                        : 'HUD: NO MAP'}
+                    </span>
+                  </>
+                )}
+              </button>
+
+              {/* Fullscreen Toggle Button (Hidden in 'full_hide') */}
+              <button
+                onClick={toggleFullscreen}
+                className={`p-2 rounded-xl border backdrop-blur-md cursor-pointer ${
+                  hudMode === 'full_hide' ? 'hidden' : 'flex'
+                }`}
+                style={{ backgroundColor: 'rgba(13, 20, 40, 0.8)', borderColor: 'rgba(73, 217, 255, 0.3)' }}
+                title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Mode'}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-4 h-4" style={{ color: '#49D9FF' }} />
+                ) : (
+                  <Maximize2 className="w-4 h-4" style={{ color: '#49D9FF' }} />
+                )}
+              </button>
+
+              {/* Help / Controls Toggle Button (?) - Always visible in all 4 modes */}
+              <button
+                onClick={() => {
+                  audioSystem.playUIClick();
+                  setShowTutorial((t) => !t);
+                }}
+                className="p-2 rounded-xl border backdrop-blur-md cursor-pointer"
+                style={{
+                  backgroundColor: showTutorial && hudMode === 'full_hide' ? 'rgba(73, 217, 255, 0.2)' : 'rgba(13, 20, 40, 0.8)',
+                  borderColor: 'rgba(154, 168, 199, 0.25)'
+                }}
                 title="Toggle Flight Controls Guide"
               >
                 <HelpCircle className="w-4 h-4" style={{ color: '#9AA8C7' }} />
               </button>
+
+              {/* Pause Button - Always visible in all 4 modes */}
               <button
                 onClick={() => {
                   audioSystem.playUIClick();
                   setIsPaused((p) => !p);
                 }}
-                className="p-2 rounded-xl border backdrop-blur-md"
+                className="p-2 rounded-xl border backdrop-blur-md cursor-pointer"
                 style={{ backgroundColor: 'rgba(13, 20, 40, 0.8)', borderColor: 'rgba(154, 168, 199, 0.25)' }}
-                title="Pause Game"
+                title="Pause Game [Esc]"
               >
                 <Pause className="w-4 h-4" style={{ color: '#F4F7FF' }} />
               </button>
             </div>
           </div>
 
-          {/* Center Crosshair, Flight Brackets & Cockpit Frame */}
-          <div className="relative flex items-center justify-center my-auto">
-            {/* Lateral Curved Sci-Fi Flight Brackets (matching reference combat HUD) */}
+          {/* Center Crosshair, Flight Brackets & Cockpit Frame (Hidden in 'full_hide') */}
+          <div
+            className={`relative items-center justify-center my-auto mobile-landscape-shrink-center ${
+              hudMode === 'full_hide' ? 'hidden' : 'flex'
+            }`}
+          >
+            {/* Lateral Curved Sci-Fi Flight Brackets */}
             <div className="absolute left-2 sm:left-12 md:left-24 top-1/2 -translate-y-1/2 pointer-events-none opacity-45 flex items-center">
               <svg width="36" height="200" viewBox="0 0 36 200" fill="none">
                 <path d="M30 10 C10 60 10 140 30 190" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" />
@@ -6002,10 +6164,16 @@ export default function SpaceExplorer3D() {
           </div>
 
           {/* Bottom HUD Row: Flight Gauges, 3D Radar & Adaptive Touch Controls */}
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            {/* Left: Speedometer, Boost & Shield Integrity */}
+          <div
+            className={`flex items-end justify-between ${
+              isMobileLandscape ? 'flex-nowrap gap-1.5' : 'flex-wrap gap-4'
+            }`}
+          >
+            {/* Left: Speedometer, Boost, Shield & Weapons (Hidden in 'no_stats', 'no_stats_map', and 'full_hide') */}
             <div
-              className="p-4 rounded-2xl border backdrop-blur-md w-full sm:w-80 space-y-3 pointer-events-auto"
+              className={`p-4 rounded-2xl border backdrop-blur-md w-full sm:w-80 space-y-3 pointer-events-auto mobile-landscape-shrink-bl ${
+                hudMode !== 'full' ? 'hidden' : ''
+              }`}
               style={{ backgroundColor: 'rgba(13, 20, 40, 0.84)', borderColor: 'rgba(73, 217, 255, 0.25)' }}
             >
               <div className="flex items-baseline justify-between">
@@ -6055,7 +6223,7 @@ export default function SpaceExplorer3D() {
                 </div>
               </div>
 
-              {/* Combat Weapon Selector Bar (Slots 1 - 3, matching reference video HUD) */}
+              {/* Combat Weapon Selector Bar (Slots 1 - 3) */}
               <div className="pt-2 border-t border-slate-700/50">
                 <div className="flex items-center justify-between text-[10px] font-mono mb-1.5" style={{ color: '#9AA8C7' }}>
                   <span className="flex items-center gap-1 font-bold text-white"><Crosshair className="w-3 h-3 text-cyan-400" /> WEAPONS [1 - 3]</span>
@@ -6111,12 +6279,12 @@ export default function SpaceExplorer3D() {
               </div>
             </div>
 
-            {/* Center: Interactive Tutorial / Mobile Flight Pad */}
-            <div className="flex flex-col items-center gap-2 pointer-events-auto">
+            {/* Center: Interactive Tutorial & Analog / Movement Flight Pad (Full size on Mobile Landscape!) */}
+            <div className="flex flex-col items-center gap-2 pointer-events-auto mx-auto shrink-0">
               {showTutorial && (
                 <div
-                  className="hidden lg:flex flex-wrap items-center justify-center gap-3 px-4 py-2 rounded-xl border backdrop-blur-md text-xs max-w-xl"
-                  style={{ backgroundColor: 'rgba(13, 20, 40, 0.82)', borderColor: 'rgba(154,168,199,0.2)', color: '#9AA8C7' }}
+                  className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 px-3.5 py-2 rounded-xl border backdrop-blur-md text-[11px] sm:text-xs max-w-xl"
+                  style={{ backgroundColor: 'rgba(13, 20, 40, 0.86)', borderColor: 'rgba(154,168,199,0.2)', color: '#9AA8C7' }}
                 >
                   <span><strong className="text-white">W/S</strong> Pitch</span>
                   <span><strong className="text-white">A/D</strong> Yaw</span>
@@ -6126,12 +6294,12 @@ export default function SpaceExplorer3D() {
                   <span><strong className="text-white">SPACE / LMB</strong> Fire</span>
                   <span><strong className="text-white">G / RMB</strong> Torpedo</span>
                   <span><strong className="text-white">1-3</strong> Weapons</span>
-                  <span><strong className="text-white">F</strong> Scan</span>
+                  <span><strong className="text-white">H</strong> HUD Mode</span>
                 </div>
               )}
 
-              {/* Touch / On-Screen Flight Controls for Mobile & Tablet */}
-              <div className="flex items-center gap-2">
+              {/* Touch / On-Screen Flight Controls (Kept at 100% size on Mobile Landscape; hidden only in 'full_hide') */}
+              <div className={`items-center gap-2 ${hudMode === 'full_hide' ? 'hidden' : 'flex'}`}>
                 <div className="grid grid-cols-3 gap-1 p-1.5 rounded-xl border backdrop-blur-md" style={{ backgroundColor: 'rgba(13,20,40,0.82)', borderColor: 'rgba(73,217,255,0.25)' }}>
                   <button
                     onPointerDown={() => (simRef.current.touchInput.roll = 1)}
@@ -6242,9 +6410,11 @@ export default function SpaceExplorer3D() {
               </div>
             </div>
 
-            {/* Right: 3D Tactical Spatial Radar */}
+            {/* Right: 3D Tactical Spatial Radar (Hidden in 'no_stats_map' and 'full_hide') */}
             <div
-              className="p-3 rounded-2xl border backdrop-blur-md flex flex-col items-center pointer-events-auto"
+              className={`p-3 rounded-2xl border backdrop-blur-md flex-col items-center pointer-events-auto mobile-landscape-shrink-br ${
+                hudMode === 'no_stats_map' || hudMode === 'full_hide' ? 'hidden' : 'flex'
+              }`}
               style={{ backgroundColor: 'rgba(13, 20, 40, 0.84)', borderColor: 'rgba(73, 217, 255, 0.25)' }}
             >
               <div className="text-[10px] font-mono uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: '#49D9FF' }}>

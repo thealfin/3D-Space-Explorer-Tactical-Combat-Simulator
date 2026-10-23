@@ -142,5 +142,6 @@ Pastikan **Node.js** (v18+) dan **pnpm** sudah terpasang di perangkat Anda.
 | **`1` / `2` / `3`** | Ganti Senjata (`[1] CANNON`, `[2] PLASMA`, `[3] TORP`) |
 | **`F` (Tahan)** | Pindai Benda Langit / Stasiun (*Telemetry Scan*) saat berada dalam jarak sensor |
 | **`C`** | Ganti Mode Kamera (*Chase Cam* / *Cockpit Cam* / *Cinematic Orbit Cam* / *Free Look*) |
+| **`H` / `Tab`** | Ganti Mode Visibilitas HUD (4 Mode: *Full* → *Hide Stats & Header* → *Hide Map* → *Full Hide*) |
 | **`P` / `Esc`** | Jeda Permainan (*Pause Menu*) |
 | **Drag Mouse di Kanvas** | Mengarahkan Pandangan & Reticle Bidikan (*Free-Look & Aim Steering*) |
