@@ -1,5 +1,5 @@
 // ============================================================================
-// KOMPONEN DATA PEMAIN, POIN, HIGH SCORE, KATALOG & PERSISTENCE (SCHEMA V1)
+// KOMPONEN DATA PEMAIN, POIN, HIGH SCORE, KATALOG TATA SURYA & MILKY WAY
 // ============================================================================
 
 export const SAVE_SCHEMA_VERSION = 1;
@@ -64,42 +64,89 @@ export const SHIPS_CATALOG = [
   }
 ];
 
-export const WORLD_OBJECTS = [
+export const WORLD_OBJECTS: any[] = [
+  // ==========================================================================
+  // SOLAR SYSTEM REPLICA PLANETS (TATA SURYA DALAM GALAKSI BIMA SAKTI)
+  // ==========================================================================
+  {
+    id: 'planet_mercury',
+    name: 'Mercury (Merkurius)',
+    category: 'planet',
+    planetPreset: 'mercury',
+    zoneType: 'SOLAR INNER RIM',
+    position: [480, 120, 60],
+    radius: 26,
+    interactionRadius: 95,
+    color: 0x8f8982,
+    atmosphereColor: 0xb8b0a4,
+    emissiveColor: 0x1f1b18,
+    rotationSpeed: 0.04,
+    hasRings: false,
+    hasClouds: false,
+    rewardCredits: 220,
+    rewardXP: 160,
+    description:
+      'Planet terdalam Tata Surya yang dipenuhi kawah tumbukan Caloris Basin dan inti besi masif di dekat korona Matahari.'
+  },
+  {
+    id: 'planet_venus',
+    name: 'Venus (Morning Star)',
+    category: 'planet',
+    planetPreset: 'venus',
+    zoneType: 'THERMAL GREENHOUSE',
+    position: [290, 65, -85],
+    radius: 48,
+    interactionRadius: 135,
+    color: 0xe3bb76,
+    atmosphereColor: 0xffd27d,
+    emissiveColor: 0x3b280c,
+    rotationSpeed: -0.03,
+    hasRings: false,
+    hasClouds: true,
+    rewardCredits: 280,
+    rewardXP: 200,
+    description:
+      'Planet terestrial berselubung awan asam sulfat keemasan супер-rotasi dengan tekanan atmosferik ekstrem.'
+  },
   {
     id: 'aurelia_prime',
-    name: 'Aurelia Prime',
+    name: 'Earth (Bumi // Terra Prime)',
     category: 'planet',
-    zoneType: 'SAFE ZONE',
+    planetPreset: 'earth',
+    zoneType: 'SAFE ZONE // SOL-3',
     position: [0, 0, -420],
     radius: 68,
     interactionRadius: 175,
-    color: 0x2b82c9,
+    color: 0x1d6bb8,
     atmosphereColor: 0x49d9ff,
     emissiveColor: 0x0a2742,
     rotationSpeed: 0.08,
     hasRings: false,
     hasClouds: true,
-    rewardCredits: 250,
-    rewardXP: 180,
-    description: 'Oceanic super-terran world teeming with bioluminescent reefs and orbital trade lanes.'
+    rewardCredits: 300,
+    rewardXP: 220,
+    description:
+      'Replika Planet Bumi (Terra) di Lengan Orion Galaksi Bima Sakti dengan samudra biru, daratan benua hijau, tudung es kutub, dan atmosfer nitrogen-oksigen.'
   },
   {
     id: 'selene_iv',
-    name: 'Selene-IV Moon',
+    name: 'The Moon (Bulan // Luna)',
     category: 'moon',
-    zoneType: 'SAFE ZONE',
+    planetPreset: 'moon',
+    zoneType: 'SAFE ZONE // LUNA',
     position: [145, 38, -340],
-    radius: 20,
+    radius: 21,
     interactionRadius: 85,
     color: 0x9aa8c7,
     atmosphereColor: 0x6b7c9e,
     emissiveColor: 0x111522,
-    rotationSpeed: 0.14,
+    rotationSpeed: 0.12,
     hasRings: false,
     hasClouds: false,
     rewardCredits: 180,
     rewardXP: 120,
-    description: 'Tidally locked silicate moon hosting automated lunar relay towers.'
+    description:
+      'Satelit alami Bumi dengan dataran basaltik gelap (Maria), kawah Tycho, dan menara relai telemetri lunar.'
   },
   {
     id: 'krios_station',
@@ -117,52 +164,37 @@ export const WORLD_OBJECTS = [
     hasClouds: false,
     rewardCredits: 300,
     rewardXP: 220,
-    description: 'Centrifugal deep-space citadel serving as the primary staging hub for Vanguard pilots.'
+    description:
+      'Stasiun luar angkasa sentrifugal berputar yang menjadi markas utama armada Astral Vanguard di orbit Bumi.'
   },
   {
-    id: 'pyros_v',
-    name: 'Pyros V',
+    id: 'planet_mars',
+    name: 'Mars (The Red Planet)',
     category: 'planet',
-    zoneType: 'HAZARD SECTOR',
-    position: [560, -70, -680],
-    radius: 82,
-    interactionRadius: 210,
-    color: 0xd94e34,
-    atmosphereColor: 0xff7b39,
-    emissiveColor: 0x4d1205,
-    rotationSpeed: 0.06,
+    planetPreset: 'mars',
+    zoneType: 'FRONTIER COLONY',
+    position: [-340, -35, -540],
+    radius: 44,
+    interactionRadius: 135,
+    color: 0xc1440e,
+    atmosphereColor: 0xe77d11,
+    emissiveColor: 0x3b1104,
+    rotationSpeed: 0.075,
     hasRings: false,
-    hasClouds: true,
-    rewardCredits: 450,
-    rewardXP: 320,
-    description: 'Hyper-volcanic proto-planet with tectonic magma rivers and intense thermal radiation.'
-  },
-  {
-    id: 'cryon_9',
-    name: 'Cryon-9 Ringed Giant',
-    category: 'planet',
-    zoneType: 'DEEP SPACE',
-    position: [-680, 95, -820],
-    radius: 96,
-    interactionRadius: 260,
-    color: 0x5c7cfa,
-    atmosphereColor: 0x7c5cff,
-    emissiveColor: 0x181c42,
-    rotationSpeed: 0.11,
-    hasRings: true,
-    ringColor: 0x8da4f7,
-    hasClouds: true,
-    rewardCredits: 500,
-    rewardXP: 380,
-    description: 'Majestic ice giant encircled by a dense band of glacially reflective shepherd rings.'
+    hasClouds: false,
+    rewardCredits: 340,
+    rewardXP: 250,
+    description:
+      'Planet Merah dengan gurun oksida besi, gunung berapi raksasa Olympus Mons, ngarai Valles Marineris, dan tudung es kutub.'
   },
   {
     id: 'tartarus_belt',
-    name: 'Tartarus Asteroid Core',
+    name: 'Main Asteroid Belt (Tartarus Core)',
     category: 'asteroid_zone',
+    planetPreset: 'mercury',
     zoneType: 'DANGER ZONE',
     position: [260, -20, -160],
-    radius: 45,
+    radius: 42,
     interactionRadius: 150,
     color: 0xffb454,
     atmosphereColor: 0xffb454,
@@ -172,7 +204,149 @@ export const WORLD_OBJECTS = [
     hasClouds: false,
     rewardCredits: 350,
     rewardXP: 280,
-    description: 'High-density metallic asteroid cluster rich in Quantum Mineral Cores.'
+    description:
+      'Inti sabuk asteroid rapat di antara orbit Mars dan Yupiter yang kaya akan mineral kuantum dan ranjau luar angkasa.'
+  },
+  {
+    id: 'planet_jupiter',
+    name: 'Jupiter (Yupiter // Gas Giant)',
+    category: 'planet',
+    planetPreset: 'jupiter',
+    zoneType: 'JOVIAN MAGNETOSPHERE',
+    position: [520, 45, -920],
+    radius: 132,
+    interactionRadius: 310,
+    color: 0xd8ca9d,
+    atmosphereColor: 0xf4a460,
+    emissiveColor: 0x2d1e10,
+    rotationSpeed: 0.16,
+    hasRings: true,
+    ringColor: 0xa89274,
+    ringInnerScale: 1.22,
+    ringOuterScale: 1.48,
+    hasClouds: true,
+    moons: [
+      { name: 'Io', distance: 175, radius: 11, color: 0xfacc15, speed: 0.45 },
+      { name: 'Europa', distance: 215, radius: 10, color: 0xe0f2fe, speed: 0.32 }
+    ],
+    rewardCredits: 550,
+    rewardXP: 420,
+    description:
+      'Raksasa gas terbesar di Tata Surya dengan sabuk awan amonia berkecepatan tinggi, badai abadi Great Red Spot, dan bulan Galilean Io & Europa.'
+  },
+  {
+    id: 'planet_saturn',
+    name: 'Saturn (Saturnus // Ringed Jewel)',
+    category: 'planet',
+    planetPreset: 'saturn',
+    zoneType: 'CASSINI RING SECTOR',
+    position: [-680, 95, -820],
+    radius: 108,
+    interactionRadius: 295,
+    color: 0xead6b8,
+    atmosphereColor: 0xfde68a,
+    emissiveColor: 0x2b2315,
+    rotationSpeed: 0.14,
+    hasRings: true,
+    ringColor: 0xe2c799,
+    ringInnerScale: 1.32,
+    ringOuterScale: 2.45,
+    axialTilt: 0.46,
+    hasClouds: true,
+    moons: [
+      { name: 'Titan', distance: 285, radius: 15, color: 0xf59e0b, speed: 0.26 }
+    ],
+    rewardCredits: 620,
+    rewardXP: 480,
+    description:
+      'Raksasa gas keemasan ikonik yang dikelilingi sistem cincin es & batuan berlapis-lapis (Cassini Division) serta bulan berkabut Titan.'
+  },
+  {
+    id: 'pyros_v',
+    name: 'Pyros V (Volcanic Exoplanet)',
+    category: 'planet',
+    planetPreset: 'pyros',
+    zoneType: 'HAZARD SECTOR',
+    position: [560, -70, -600],
+    radius: 76,
+    interactionRadius: 200,
+    color: 0xd94e34,
+    atmosphereColor: 0xff7b39,
+    emissiveColor: 0x4d1205,
+    rotationSpeed: 0.06,
+    hasRings: false,
+    hasClouds: true,
+    rewardCredits: 450,
+    rewardXP: 320,
+    description:
+      'Proto-planet hiper-vulkanik dengan sungai magma tektonik dan badai ion termal.'
+  },
+  {
+    id: 'planet_uranus',
+    name: 'Uranus (Tilted Ice Giant)',
+    category: 'planet',
+    planetPreset: 'uranus',
+    zoneType: 'OUTER ICE SECTOR',
+    position: [-380, -90, -1340],
+    radius: 78,
+    interactionRadius: 215,
+    color: 0x7de3f4,
+    atmosphereColor: 0x38bdf8,
+    emissiveColor: 0x0c2d3a,
+    rotationSpeed: 0.11,
+    hasRings: true,
+    ringColor: 0x7dd3fc,
+    ringInnerScale: 1.35,
+    ringOuterScale: 1.75,
+    axialTilt: 1.71, // ~98 degree vertical tilt!
+    hasClouds: true,
+    rewardCredits: 580,
+    rewardXP: 440,
+    description:
+      'Raksasa es cyan-aquamarine dengan kemiringan sumbu ekstrem 97,7 derajat sehingga cincinnya berputar secara vertikal.'
+  },
+  {
+    id: 'cryon_9',
+    name: 'Neptune (Neptunus // Cryon-9)',
+    category: 'planet',
+    planetPreset: 'neptune',
+    zoneType: 'DEEP SPACE // KUIPER EDGE',
+    position: [260, -65, -1480],
+    radius: 76,
+    interactionRadius: 215,
+    color: 0x274687,
+    atmosphereColor: 0x3b82f6,
+    emissiveColor: 0x0f1b3d,
+    rotationSpeed: 0.12,
+    hasRings: true,
+    ringColor: 0x60a5fa,
+    ringInnerScale: 1.3,
+    ringOuterScale: 1.62,
+    hasClouds: true,
+    rewardCredits: 600,
+    rewardXP: 460,
+    description:
+      'Raksasa es biru kobalt terdalam di Tata Surya dengan angin metana supersonik dan pusaran badai Great Dark Spot.'
+  },
+  {
+    id: 'planet_pluto',
+    name: 'Pluto & Kuiper Ice Belt',
+    category: 'planet',
+    planetPreset: 'pluto',
+    zoneType: 'KUIPER FRONTIER',
+    position: [0, -125, -1720],
+    radius: 28,
+    interactionRadius: 110,
+    color: 0xd2b48c,
+    atmosphereColor: 0x93c5fd,
+    emissiveColor: 0x1e1b18,
+    rotationSpeed: 0.05,
+    hasRings: false,
+    hasClouds: false,
+    rewardCredits: 520,
+    rewardXP: 400,
+    description:
+      'Planet katai es di jantung Sabuk Kuiper yang memiliki dataran gletser nitrogen berbentuk hati ikonik (Tombaugh Regio).'
   },
   {
     id: 'nebula_vortex',
@@ -191,7 +365,48 @@ export const WORLD_OBJECTS = [
     hasClouds: false,
     rewardCredits: 750,
     rewardXP: 600,
-    description: 'Ancient hyper-dimensional stabilizer suspended inside the Violet Nebula frontier.'
+    description:
+      'Stabilisator hiper-dimensi kuno yang melayang di koridor Nebula Violet menuju pusat Bima Sakti.'
+  },
+  {
+    id: 'sagittarius_a_star',
+    name: 'Sagittarius A* (Milky Way Core)',
+    category: 'black_hole',
+    zoneType: 'GALACTIC CORE SINGULARITY',
+    position: [-80, 210, -2150],
+    radius: 95,
+    interactionRadius: 340,
+    color: 0xff6b00,
+    atmosphereColor: 0x00f0ff,
+    emissiveColor: 0xff4500,
+    rotationSpeed: 0.35,
+    hasRings: true,
+    ringColor: 0xff8800,
+    hasClouds: false,
+    rewardCredits: 1200,
+    rewardXP: 950,
+    description:
+      'Lubang hitam supermasif di pusat Galaksi Bima Sakti (Milky Way) yang dikelilingi piringan akresi plasma relativistik dan cincin foton.'
+  },
+  {
+    id: 'black_hole_gargantua',
+    name: 'Gargantua Singularity (Deep Rift)',
+    category: 'black_hole',
+    zoneType: 'GRAVITATIONAL ANOMALY',
+    position: [420, -140, -1850],
+    radius: 82,
+    interactionRadius: 320,
+    color: 0x7c3aed,
+    atmosphereColor: 0x38bdf8,
+    emissiveColor: 0x2e1065,
+    rotationSpeed: 0.42,
+    hasRings: true,
+    ringColor: 0xa855f7,
+    hasClouds: false,
+    rewardCredits: 1100,
+    rewardXP: 880,
+    description:
+      'Singularitas lubang hitam berotasi ekstrem dengan vorteks akresi ungu-kebiruan dan horizon peristiwa penarik materi.'
   }
 ];
 
@@ -205,7 +420,7 @@ export const MISSIONS_CATALOG = [
     rewardCredits: 450,
     rewardXP: 300,
     briefing:
-      'Pilot, calibrate your flight control thrusters by flying through 5 holographic vector rings leading toward Aurelia Prime.',
+      'Pilot, calibrate your flight control thrusters by flying through 5 holographic vector rings leading toward Earth (Terra Prime).',
     checkpoints: [
       [0, 5, -90],
       [-28, 18, -175],
@@ -216,26 +431,26 @@ export const MISSIONS_CATALOG = [
   },
   {
     id: 'mission_02_cartography',
-    title: '02 // Helios Sector Cartography',
+    title: '02 // Earth-Luna Sector Cartography',
     type: 'scan_targets',
     difficulty: 'Navigator',
     timeLimit: 180,
     rewardCredits: 700,
     rewardXP: 450,
     briefing:
-      'Approach within sensor range and complete a telemetry scan of Aurelia Prime, Selene-IV Moon, and Krios Orbital Station.',
+      'Approach within sensor range and complete a telemetry scan of Earth (Bumi), The Moon (Luna), and Krios Orbital Station.',
     targetIds: ['aurelia_prime', 'selene_iv', 'krios_station']
   },
   {
     id: 'mission_03_asteroid_harvest',
-    title: '03 // Tartarus Core Extraction',
+    title: '03 // Main Asteroid Belt Core Extraction',
     type: 'collect_cores',
     difficulty: 'Specialist',
     timeLimit: 150,
     rewardCredits: 950,
     rewardXP: 620,
     briefing:
-      'Navigate the hazardous Tartarus Asteroid Belt and harvest 5 unstable Quantum Energy Cores before containment expires.',
+      'Navigate the hazardous Main Asteroid Belt (Tartarus Core), dodge EMP mines, and harvest 5 unstable Quantum Energy Cores.',
     corePositions: [
       [180, -10, -120],
       [235, 12, -165],
@@ -246,14 +461,14 @@ export const MISSIONS_CATALOG = [
   },
   {
     id: 'mission_04_krios_express',
-    title: '04 // Krios High-Speed Trench Run',
+    title: '04 // Saturn Cassini Ring Trench Run',
     type: 'checkpoints',
     difficulty: 'Veteran',
     timeLimit: 95,
     rewardCredits: 1350,
     rewardXP: 850,
     briefing:
-      'Engage afterburners and complete the high-velocity corridor from Tartarus Sector to Cryon-9 approach vector under 95 seconds.',
+      'Engage afterburners and complete the high-velocity corridor from the Asteroid Belt to Saturn’s majestic ring system under 95 seconds.',
     checkpoints: [
       [90, 0, -140],
       [-40, 30, -260],
@@ -264,14 +479,14 @@ export const MISSIONS_CATALOG = [
   },
   {
     id: 'mission_05_nebula_expedition',
-    title: '05 // Chronos Anomaly Expedition',
+    title: '05 // Chronos & Jovian Expedition',
     type: 'checkpoints',
     difficulty: 'Commander',
     timeLimit: 145,
     rewardCredits: 2000,
     rewardXP: 1300,
     briefing:
-      'Chart a deep-space route past Pyros V and fly through the long-range telemetry beacons to reach the Chronos Anomaly Relay.',
+      'Chart a deep-space route past Pyros V and Jupiter to fly through the long-range telemetry beacons toward the Chronos Anomaly Relay.',
     checkpoints: [
       [160, -20, -320],
       [360, -45, -520],
@@ -289,7 +504,7 @@ export const MISSIONS_CATALOG = [
     rewardCredits: 3500,
     rewardXP: 2500,
     briefing:
-      'Pilot, deploy into the Tartarus Asteroid Belt. Engage the hostile fighter squadrons (WRAITH INTERCEPTOR & AEGIS SENTINEL), destroy the Dreadnought Kronos pulse batteries and citadel bridge, and extract through the Warp Gate.',
+      'Deploy into the Asteroid Belt. Engage the hostile fighter squadrons (WRAITH INTERCEPTOR & AEGIS SENTINEL), destroy the Dreadnought Kronos pulse batteries and citadel bridge, and extract through the Warp Gate.',
     bossPosition: [280, 10, -220],
     fighterSpawns: [
       [230, 25, -180],
@@ -297,27 +512,40 @@ export const MISSIONS_CATALOG = [
       [260, 40, -290],
       [340, 15, -170]
     ]
+  },
+  {
+    id: 'mission_07_solar_grand_tour',
+    title: '07 // Milky Way & Solar System Grand Tour',
+    type: 'scan_targets',
+    difficulty: 'Grandmaster',
+    timeLimit: 320,
+    rewardCredits: 4200,
+    rewardXP: 3000,
+    briefing:
+      'Execute a trans-orbital reconnaissance tour across the Solar System: scan Mars, Jupiter, Saturn, and the supermassive black hole Sagittarius A*.',
+    targetIds: ['planet_mars', 'planet_jupiter', 'planet_saturn', 'sagittarius_a_star']
   }
 ];
 
 export const ACHIEVEMENTS_CATALOG = [
   { id: 'first_flight', title: 'First Ignition', desc: 'Fly a total distance of 1,000 meters in deep space.', reward: 200 },
   { id: 'cartographer', title: 'Stellar Cartographer', desc: 'Discover and scan at least 3 celestial objects.', reward: 400 },
+  { id: 'solar_voyager', title: 'Solar System Voyager', desc: 'Scan at least 8 planets & moons across the Solar System.', reward: 1200 },
   { id: 'mission_ace', title: 'Vanguard Ace', desc: 'Complete at least 2 official flight missions.', reward: 500 },
   { id: 'fleet_commander', title: 'Fleet Expansion', desc: 'Unlock a second spacecraft in the Orbital Hangar.', reward: 600 },
   { id: 'chief_engineer', title: 'Chief Engineer', desc: 'Upgrade any ship subsystem to Level 3 or higher.', reward: 450 },
-  { id: 'deep_explorer', title: 'Void Pathfinder', desc: 'Scan all 7 major objects in the Helios System.', reward: 1500 },
+  { id: 'deep_explorer', title: 'Milky Way Pathfinder', desc: 'Scan all 15 major celestial bodies in the Solar System & Milky Way.', reward: 2500 },
   { id: 'emperor_slayer', title: 'Dreadnought Bane', desc: 'Defeat the hostile Dreadnought Kronos in Tartarus sector.', reward: 2500 }
 ];
 
 export const EXPEDITION_SECTORS = [
   {
     id: 'alpha',
-    region: 'NORTHERN GEOCORE',
-    label: 'SECTOR ALPHA',
-    targetName: 'Sector Alpha',
-    coordinates: '51.5074° N, 0.1278° W',
-    elevation: '35m Above Datum',
+    region: 'SOLAR SYSTEM // TERRA-LUNA ORBIT',
+    label: 'SECTOR EARTH (BUMI)',
+    targetName: 'Earth (Terra Prime)',
+    coordinates: '00.0000° N, 1.00 AU SOL',
+    elevation: '408km Low Earth Orbit',
     density: '1.225 kg/m³',
     nitrogen: 78.1,
     oxygen: 20.9,
@@ -327,65 +555,65 @@ export const EXPEDITION_SECTORS = [
     magnetic: '0.31GAUSS',
     tilt: '23.44°',
     briefing:
-      'Stable continental sector. Standard atmospheric envelope. Optimal for primary shuttle vector approach. Command networks reporting active beacon links.',
+      'Replika orbit Bumi & Bulan di Lengan Orion Galaksi Bima Sakti. Optimal untuk peluncuran langsung menuju Stasiun Krios, Venus, dan Merkurius.',
     spawnPos: [0, 10, 45]
   },
   {
     id: 'beta',
-    region: 'ATLANTIC OCEANIC RIFT',
-    label: 'SECTOR BETA',
-    targetName: 'Sector Beta',
-    coordinates: '28.1492° N, 41.8021° W',
-    elevation: '12m Above Datum',
-    density: '1.290 kg/m³',
-    nitrogen: 76.4,
-    oxygen: 22.1,
-    argon: 1.5,
-    radius: '6,378KM',
-    gravity: '9.798 M/S²',
-    magnetic: '0.38GAUSS',
-    tilt: '23.44°',
+    region: 'INNER & RED PLANET CORRIDOR',
+    label: 'SECTOR MARS & VENUS',
+    targetName: 'Mars (Olympus Mons)',
+    coordinates: '18.6500° N, 1.52 AU SOL',
+    elevation: '21,229m Olympus Datum',
+    density: '0.020 kg/m³',
+    nitrogen: 2.7,
+    oxygen: 0.13,
+    argon: 1.6,
+    radius: '3,389KM',
+    gravity: '3.721 M/S²',
+    magnetic: '0.01GAUSS',
+    tilt: '25.19°',
     briefing:
-      'Deep oceanic trench telemetry active. High-density ionized moisture layers detected. Recommended for low-altitude orbital reconnaissance sweeps.',
-    spawnPos: [-120, 18, -160]
+      'Koridor planet bagian dalam Tata Surya. Dekat dengan dataran merah Mars, sabuk asteroid utama, dan awan asam Venus.',
+    spawnPos: [-240, 12, -390]
   },
   {
     id: 'gamma',
-    region: 'EASTERN MEGALOPOLIS RIM',
-    label: 'SECTOR GAMMA',
-    targetName: 'Sector Gamma',
-    coordinates: '35.6762° N, 139.6503° E',
-    elevation: '88m Above Datum',
-    density: '1.184 kg/m³',
-    nitrogen: 78.5,
-    oxygen: 20.2,
-    argon: 1.3,
-    radius: '6,368KM',
-    gravity: '9.812 M/S²',
-    magnetic: '0.29GAUSS',
-    tilt: '23.44°',
+    region: 'GAS GIANTS // JUPITER & SATURN RINGS',
+    label: 'SECTOR JOVIAN–SATURN',
+    targetName: 'Jupiter & Saturnus',
+    coordinates: '5.20 AU – 9.58 AU SOL',
+    elevation: 'Cassini Ring Plane',
+    density: '1.326 g/cm³',
+    nitrogen: 4.0,
+    oxygen: 1.0,
+    argon: 0.5,
+    radius: '69,911KM',
+    gravity: '24.79 M/S²',
+    magnetic: '4.28GAUSS',
+    tilt: '26.73°',
     briefing:
-      'High-energy orbital relay corridor. Dense satellite and station traffic across upper thermosphere. Deflector shields advised during transit.',
-    spawnPos: [180, 22, -210]
+      'Sektor raksasa gas Tata Surya: amati Great Red Spot di Yupiter dan terbang menembus cincin es berlapis Cassini Division di Saturnus.',
+    spawnPos: [380, 65, -760]
   },
   {
     id: 'delta',
-    region: 'PACIFIC DEEP ABYSSAL BASIN',
-    label: 'SECTOR DELTA',
-    targetName: 'Sector Delta',
-    coordinates: '11.3493° N, 142.1996° E',
-    elevation: '04m Above Datum',
-    density: '1.315 kg/m³',
-    nitrogen: 77.2,
-    oxygen: 21.4,
-    argon: 1.4,
-    radius: '6,371KM',
-    gravity: '9.804 M/S²',
-    magnetic: '0.42GAUSS',
-    tilt: '23.44°',
+    region: 'KUIPER ICE RIM & MILKY WAY CORE',
+    label: 'SECTOR SAGITTARIUS A*',
+    targetName: 'Uranus, Neptunus & Sgr A*',
+    coordinates: '30.1 AU – GALACTIC CORE',
+    elevation: 'Event Horizon Rim',
+    density: '1.638 g/cm³',
+    nitrogen: 15.0,
+    oxygen: 2.0,
+    argon: 1.2,
+    radius: '24,622KM',
+    gravity: '11.15 M/S²',
+    magnetic: '0.23GAUSS',
+    tilt: '97.77°',
     briefing:
-      'Frontier abyssal anomaly zone. Strong geomagnetic flux readings near rival fleet staging coordinates. Weapons free authorized upon arrival.',
-    spawnPos: [275, 16, -45]
+      'Perbatasan terdalam Tata Surya & inti Galaksi Bima Sakti. Jelajahi Uranus, Neptunus, Pluto, komet Sabuk Kuiper, hingga lubang hitam supermasif Sagittarius A*.',
+    spawnPos: [-110, 60, -1220]
   }
 ];
 
@@ -428,7 +656,8 @@ export const DEFAULT_SAVE_DATA = {
     mission_03_asteroid_harvest: { status: 'available', attempts: 0, bestTime: null, rewardsClaimed: false },
     mission_04_krios_express: { status: 'available', attempts: 0, bestTime: null, rewardsClaimed: false },
     mission_05_nebula_expedition: { status: 'available', attempts: 0, bestTime: null, rewardsClaimed: false },
-    mission_06_destroy_emperor: { status: 'available', attempts: 0, bestTime: null, rewardsClaimed: false }
+    mission_06_destroy_emperor: { status: 'available', attempts: 0, bestTime: null, rewardsClaimed: false },
+    mission_07_solar_grand_tour: { status: 'available', attempts: 0, bestTime: null, rewardsClaimed: false }
   },
   exploration: {
     discoveredObjectIds: [],
@@ -438,10 +667,10 @@ export const DEFAULT_SAVE_DATA = {
   },
   claimedAchievements: [],
   settings: {
-    graphicsQuality: 'High', // Low, Medium, High
+    graphicsQuality: 'High',
     shadowsEnabled: true,
     bloomEnabled: true,
-    particleDensity: 'High', // Low, Medium, High
+    particleDensity: 'High',
     mouseSteering: false,
     mouseSensitivity: 1.0,
     touchDragSteering: true,
@@ -638,6 +867,7 @@ export function checkAchievementUnlocked(achId: string, saveData: any) {
 
   if (achId === 'first_flight') return exp.totalFlightDistance >= 1000;
   if (achId === 'cartographer') return exp.discoveredObjectIds.length >= 3;
+  if (achId === 'solar_voyager') return exp.discoveredObjectIds.length >= 8;
   if (achId === 'mission_ace') return completedCount >= 2;
   if (achId === 'fleet_commander') return unlockedShipsCount >= 2;
   if (achId === 'chief_engineer') return hasLevel3Upgrade;

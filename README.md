@@ -48,23 +48,45 @@ Pesawat dilengkapi dengan **3 mode senjata** yang memiliki proyektil 3D volumetr
   - **4 Turret Pertahanan** (`PULSE BATTERY`) dan **Anjungan Komando** (`CITADEL BRIDGE`) di atas kapal induk.
   - Perisai dan lambung utama **DREADNOUGHT KRONOS** hingga meledak dan membuka **Extraction Warp Gate**.
 
-### 5. Sistem Benda Langit (Helios System)
-Terdapat **7 lokasi utama** yang dapat ditemukan dan dipindai menggunakan *Telemetry Scanner* (`[F]`):
-1. **Aurelia Prime** (*Safe Zone*) — Planet samudra *super-terran* dengan terumbu bioluminesensi.
-2. **Selene-IV Moon** (*Safe Zone*) — Bulan silikat terkunci pasang surut dengan menara relai otomatis.
-3. **Krios Orbital Station** (*Safe Hub*) — Stasiun luar angkasa sentrifugal berputar yang menjadi markas utama pilot Vanguard.
-4. **Pyros V** (*Hazard Sector*) — Proto-planet hiper-vulkanik dengan sungai magma tektonik.
-5. **Cryon-9 Ringed Giant** (*Deep Space*) — Raksasa es megah dengan cincin reflektif glasial.
-6. **Tartarus Asteroid Core** (*Danger Zone*) — Sabuk asteroid logam berdensitas tinggi dan lokasi armada *Dreadnought Kronos*.
-7. **Chronos Anomaly Relay** (*Restricted Anomaly*) — Stabilisator hiper-dimensi kuno di perbatasan Nebula Violet.
+### 5. Replika Planet Tata Surya, Galaksi Milky Way & Benda Langit (16 Lokasi)
+Terdapat **16 objek astronomi utama** (replika planet-planet Tata Surya, lubang hitam supermasif Galaksi Bima Sakti / *Milky Way*, singularitas Gargantua, serta stasiun dan anomali) yang dapat ditemukan dan dipindai menggunakan *Telemetry Scanner* (`[F]`):
+1. **Mercury (Hermes-I)** (*Inner Solar Zone*) — Planet terdalam penuh kawah meteorit tua dan tebing kompresi *Caloris Basin*.
+2. **Venus (Cytherea-II)** (*Thermal Hazard*) — Planet berselimut awan asam sulfat kuning-emas super-rotasi dengan efek rumah kaca ekstrem.
+3. **Earth / Terra (Aurelia Prime)** (*Safe Zone*) — Replika Bumi dengan benua hijau-cokelat, samudra biru dalam, lapisan es kutub, dan awan siklon putih.
+4. **The Moon / Luna (Selene-IV)** (*Safe Zone*) — Satelit alami Bumi dengan dataran *Lunar Maria* basaltik gelap dan kawah *Tycho*.
+5. **Mars (Ares-IV)** (*Frontier Zone*) — Planet merah berkarat dengan ngarai raksasa *Valles Marineris*, gunung *Olympus Mons*, dan tudung es kutub.
+6. **Jupiter (Jove-V)** (*Gravity Hazard*) — Raksasa gas terbesar di Tata Surya dengan pita awan amonia, badai **Great Red Spot**, dan bulan **Io** & **Europa** yang mengorbit secara *real-time*.
+7. **Saturn (Cronus-VI)** (*Ringed Sector*) — Raksasa gas keemasan dengan sistem cincin es berlapis (**Cincin A, B, C & Celah Cassini Division**) serta bulan **Titan**.
+8. **Uranus (Caelus-VII)** (*Cryo Sector*) — Raksasa es *cyan-aquamarine* yang berotasi miring ekstrem (`98°`) lengkap dengan cincin vertikal tipis.
+9. **Neptune (Cryon-9)** (*Deep Space*) — Raksasa es biru kobalt terdalam dengan angin supersonik dan pusaran badai **Great Dark Spot**.
+10. **Pluto & Charon** (*Kuiper Rim*) — Planet katai Sabuk Kuiper dengan gletser nitrogen berbentuk hati (**Tombaugh Regio**) dan bulan pendamping **Charon**.
+11. **Sagittarius A\* (Milky Way Core)** (*Black Hole Singularity*) — Lubang hitam supermasif di pusat Galaksi Bima Sakti (*Milky Way*) lengkap dengan *Event Horizon*, *Photon Ring*, dan *Relativistic Accretion Disk* berputar serta gaya tarik gravitasi nyata.
+12. **Gargantua Singularity (Deep Rift)** (*Gravitational Anomaly*) — Singularitas lubang hitam berotasi ekstrem dengan vorteks akresi ungu-kebiruan dan horizon peristiwa penarik materi.
+13. **Krios Orbital Station** (*Safe Hub*) — Stasiun luar angkasa sentrifugal berputar yang menjadi markas utama pilot Vanguard.
+14. **Pyros-7 Volcanic World** (*Hazard Sector*) — Exoplanet hiper-vulkanik dengan sungai magma tektonik.
+15. **Kryos Asteroid Belt Core** (*Danger Zone*) — Sabuk asteroid logam berdensitas tinggi dan lokasi armada *Dreadnought Kronos*.
+16. **Chronos Anomaly Relay** (*Restricted Anomaly*) — Stabilisator hiper-dimensi kuno di perbatasan Nebula Violet.
 
-### 6. Daftar Misi Kampanye
-1. `01 // Orbital Vector Calibration` (*Cadet*) — Terbang melewati 5 cincin vektor holografik menuju Aurelia Prime.
-2. `02 // Helios Sector Cartography` (*Navigator*) — Pindai telemetri Aurelia Prime, Selene-IV Moon, dan Krios Orbital Station.
-3. `03 // Tartarus Core Extraction` (*Specialist*) — Kumpulkan 5 *Quantum Energy Cores* di tengah sabuk asteroid Tartarus.
-4. `04 // Krios High-Speed Trench Run` (*Veteran*) — Pacu *afterburner* melewati koridor berkecepatan tinggi menuju Cryon-9.
-5. `05 // Chronos Anomaly Expedition` (*Commander*) — Lintasi suar telemetri jarak jauh melewati Pyros V menuju Chronos Anomaly Relay.
+### 6. Bintang Bersinar, Ledakan Kosmik & Kawanan Komet Dinamis
+- **Gaya Gravitasi Nyata Black Hole**: Mendekati lubang hitam (*Sagittarius A\** atau *Gargantua*) dalam radius `< 460m` memicu tarikan gravitasi eksponensial ke arah singularitas, getaran kamera (*camera shake*), serta kompresi singularitas jika melewati *Event Horizon*.
+- **Bintang-Bintang Bersinar yang Dapat Dihancurkan (*Destructible Radiant Stars*)**:
+  - *Solaris Flare Dwarf*, *Rigel Blue Hypergiant*, dan *Pyros Radiant Proto-Star* yang memiliki korona radiatif volumetrik, lidah api surya (*prominences*) berputar, dan HP bar (`480 - 750 HP`).
+  - **Ledakan Kosmik (Supernova Blast) & Efek Knockback**: Ketika bintang bersinar hancur oleh tembakan pesawat, terjadi ledakan supernova kosmik raksasa (gelombang kejut bola berdiameter `180m+`, kilatan putih-emas menyilaukan, dan audio sub-bass gemuruh) yang **menghempaskan/melempar pesawat pemain menjauhi bintang dengan impuls knockback berkecepatan tinggi (`290 m/s`)**, getaran kamera intens, dan kilatan perisai (`+1.200 PTS`).
+- **Kawanan Komet Bergerak Dinamis (*14+ Criss-Crossing Comets*)**:
+  - 14 komet es aktif (*Halley-IX, Neowise-Prime, Hale-Bopp VII, Encke, Swift-Tuttle, Hyakutake*, dll.) yang meluncur di bidang orbit saling bersilangan dengan kecepatan relatif bervariasi (`18 - 36 m/s`) dan ekor ion bercahaya.
+  - **Bisa Ditembak & Dihancurkan**: Pemain dapat mengunci komet dan menembaknya hingga meledak menjadi serpihan es kristal bertebaran dan debu kuantum (`+150 PTS`).
+- **Ranjau Luar Angkasa EMP (`EMP Proximity Mines`)**: 36 ranjau berduri dengan lampu suar merah berkedip yang meledak otomatis dalam radius `18.5m` (`+120 PTS`).
+- **Puing Satelit & Bangkai Kapal (`Derelict Ship & Satellite Debris`)**: 26 bangkai satelit dan rangka lambung kapal yang berputar di jalur orbit (`+90 PTS`).
+- **Sabuk Asteroid (155 Asteroid)**: Sabuk asteroid silikat (`grey`), besi (`red`), dan kristal es Sabuk Kuiper (`ice`).
+
+### 7. Daftar Misi Kampanye
+1. `01 // Orbital Vector Calibration` (*Cadet*) — Terbang melewati 5 cincin vektor holografik di sekitar Bumi dan Bulan.
+2. `02 // Inner Solar System Cartography` (*Navigator*) — Pindai telemetri Bumi, Bulan, Merkurius, Venus, dan Mars.
+3. `03 // Kryos Belt Core Extraction` (*Specialist*) — Kumpulkan 5 *Quantum Energy Cores* di tengah sabuk asteroid Kryos.
+4. `04 // Gas Giant Ring Trench Run` (*Veteran*) — Pacu *afterburner* melewati koridor berkecepatan tinggi melintasi Jupiter dan cincin Saturnus menuju Neptunus.
+5. `05 // Outer Rim & Milky Way Core Expedition` (*Commander*) — Lintasi suar telemetri jarak jauh melewati Uranus dan Pluto menuju lubang hitam Sagittarius A*.
 6. `06 // Operation Eclipse: Strike Dreadnought Kronos` (*Legendary*) — Hancurkan skuadron pengawal, rontokkan *Pulse Battery* & *Citadel Bridge* milik kapal induk *Dreadnought Kronos*, dan ekstraksi melalui *Warp Gate*.
+7. `07 // Solar System Grand Tour (Voyager Protocol)` (*Grand Explorer*) — Pindai kedelapan planet Tata Surya dari Merkurius hingga Neptunus serta lubang hitam pusat Galaksi Bima Sakti (*Sagittarius A\**).
 
 ### 7. Sistem Upgrade, Progression & Web Audio Synthesizer
 - **4 Subsistem Upgrade (Level 1–5)**: *Ion Thruster Drive* (Top Speed), *Gyro Attitude Thrusters* (Handling), *Warp Plasma Capacitor* (Boost Capacity), dan *Deflector Shield Matrix* (Shield HP).

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createFresnelAtmosphereMaterial } from './planetAssets';
 
 // ============================================================================
 // KOMPONEN ASET 3D: OBJEK YANG BISA DI-HIT, PROYEKTIL, EFEK LEDAKAN & PORTAL
@@ -19,9 +20,10 @@ export function getCrateredAsteroidTexture(rockType = 'grey') {
   const bCtx = bumpCanvas.getContext('2d')!;
 
   const isRed = rockType === 'red';
-  const baseColor = isRed ? '#5c2e26' : '#524c47';
-  const midColor = isRed ? '#783d33' : '#6b645e';
-  const lightColor = isRed ? '#965245' : '#888078';
+  const isIce = rockType === 'ice';
+  const baseColor = isIce ? '#3b6e8c' : isRed ? '#5c2e26' : '#524c47';
+  const midColor = isIce ? '#5fa8cc' : isRed ? '#783d33' : '#6b645e';
+  const lightColor = isIce ? '#bae6fd' : isRed ? '#965245' : '#888078';
 
   ctx.fillStyle = baseColor;
   ctx.fillRect(0, 0, 1024, 1024);
@@ -49,9 +51,9 @@ export function getCrateredAsteroidTexture(rockType = 'grey') {
     const cr = 18 + Math.random() * 55;
 
     const cGrad = ctx.createRadialGradient(cx, cy, cr * 0.15, cx, cy, cr);
-    cGrad.addColorStop(0, '#1c1714');
-    cGrad.addColorStop(0.7, '#2f2824');
-    cGrad.addColorStop(0.85, isRed ? '#8a4b3d' : '#807972');
+    cGrad.addColorStop(0, isIce ? '#16354d' : '#1c1714');
+    cGrad.addColorStop(0.7, isIce ? '#245273' : '#2f2824');
+    cGrad.addColorStop(0.85, isIce ? '#e0f2fe' : isRed ? '#8a4b3d' : '#807972');
     cGrad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = cGrad;
     ctx.beginPath();
@@ -352,4 +354,442 @@ export function spawnMuzzleFlashVFX(
     maxLife: 0.09
   });
 }
+
+// ============================================================================
+// OBSTAKEL GALAKSI BARU: RANJAU EMP, PUING SATELIT/KAPAL & KOMET AKTIF
+// ============================================================================
+
+export function createSpaceMineMesh(): THREE.Group {
+  const mineGroup = new THREE.Group();
+
+  const shellGeo = new THREE.IcosahedronGeometry(3.2, 2);
+  const shellMat = new THREE.MeshStandardMaterial({
+    color: 0x1e293b,
+    metalness: 0.88,
+    roughness: 0.25
+  });
+  mineGroup.add(new THREE.Mesh(shellGeo, shellMat));
+
+  // Hazard Equatorial Ring
+  const bandGeo = new THREE.TorusGeometry(3.32, 0.28, 12, 32);
+  const bandMat = new THREE.MeshStandardMaterial({
+    color: 0xef4444,
+    emissive: 0xdc2626,
+    emissiveIntensity: 1.8
+  });
+  const band = new THREE.Mesh(bandGeo, bandMat);
+  band.rotation.x = Math.PI / 2;
+  mineGroup.add(band);
+
+  // 14 Radial Sensor Spikes
+  const spikeGeo = new THREE.ConeGeometry(0.38, 2.6, 8);
+  spikeGeo.translate(0, 4.1, 0);
+  const spikeMat = new THREE.MeshStandardMaterial({
+    color: 0x94a3b8,
+    metalness: 0.92,
+    roughness: 0.2
+  });
+  const tipGeo = new THREE.SphereGeometry(0.28, 8, 8);
+  tipGeo.translate(0, 5.4, 0);
+  const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff2a4b });
+
+  const dirs = [
+    new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
+    new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0),
+    new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1),
+    new THREE.Vector3(1, 1, 1).normalize(), new THREE.Vector3(-1, 1, 1).normalize(),
+    new THREE.Vector3(1, -1, 1).normalize(), new THREE.Vector3(-1, -1, 1).normalize(),
+    new THREE.Vector3(1, 1, -1).normalize(), new THREE.Vector3(-1, 1, -1).normalize(),
+    new THREE.Vector3(1, -1, -1).normalize(), new THREE.Vector3(-1, -1, -1).normalize()
+  ];
+
+  const up = new THREE.Vector3(0, 1, 0);
+  dirs.forEach((d) => {
+    const q = new THREE.Quaternion().setFromUnitVectors(up, d);
+    const spike = new THREE.Mesh(spikeGeo, spikeMat);
+    spike.quaternion.copy(q);
+    mineGroup.add(spike);
+
+    const tip = new THREE.Mesh(tipGeo, beaconMat);
+    tip.quaternion.copy(q);
+    mineGroup.add(tip);
+  });
+
+  // Pulsing Red Threat Aura Sphere
+  const auraGeo = new THREE.SphereGeometry(5.6, 16, 16);
+  const auraMat = new THREE.MeshBasicMaterial({
+    color: 0xff1e42,
+    transparent: true,
+    opacity: 0.18,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const aura = new THREE.Mesh(auraGeo, auraMat);
+  mineGroup.add(aura);
+
+  mineGroup.userData = { beaconMat, aura };
+  return mineGroup;
+}
+
+export function createDerelictDebrisMesh(variant = 0): THREE.Group {
+  const debrisGroup = new THREE.Group();
+  const hullMat = new THREE.MeshStandardMaterial({
+    color: 0x334155,
+    metalness: 0.82,
+    roughness: 0.42
+  });
+  const scorchedMat = new THREE.MeshStandardMaterial({
+    color: 0x1e293b,
+    metalness: 0.65,
+    roughness: 0.72
+  });
+  const solarMat = new THREE.MeshStandardMaterial({
+    color: 0x1d4ed8,
+    emissive: 0x0f172a,
+    metalness: 0.9,
+    roughness: 0.18,
+    side: THREE.DoubleSide
+  });
+  const sparkMat = new THREE.MeshBasicMaterial({
+    color: variant % 2 === 0 ? 0x38bdf8 : 0xf97316
+  });
+
+  if (variant % 3 === 0) {
+    // Variant 0: Broken Orbital Communications Satellite with shattered Solar Wings
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 8.5, 12), hullMat);
+    core.rotation.z = 0.4;
+    debrisGroup.add(core);
+
+    const dish = new THREE.Mesh(new THREE.ConeGeometry(4.2, 2.2, 16, 1, true), scorchedMat);
+    dish.position.set(0, 4.8, 0);
+    dish.rotation.x = Math.PI;
+    debrisGroup.add(dish);
+
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(11, 0.25, 3.6), solarMat);
+    wingL.position.set(-7.2, 0.5, 0);
+    wingL.rotation.set(0.25, 0.1, -0.18);
+    debrisGroup.add(wingL);
+
+    const wingR = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.25, 3.4), solarMat);
+    wingR.position.set(5.5, -0.8, 0.5);
+    wingR.rotation.set(-0.35, -0.2, 0.4);
+    debrisGroup.add(wingR);
+  } else if (variant % 3 === 1) {
+    // Variant 1: Torn Starship Hull Girder & Exposed Reactor Core
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(14, 3.2, 3.8), scorchedMat);
+    debrisGroup.add(beam);
+
+    const plate1 = new THREE.Mesh(new THREE.BoxGeometry(8.5, 6.2, 0.6), hullMat);
+    plate1.position.set(-2, 1.8, 2.1);
+    plate1.rotation.set(0.2, 0.4, -0.3);
+    debrisGroup.add(plate1);
+
+    const reactor = new THREE.Mesh(new THREE.SphereGeometry(2.3, 14, 14), sparkMat);
+    reactor.position.set(3.2, 0, 0);
+    debrisGroup.add(reactor);
+  } else {
+    // Variant 2: Cargo Container Cluster & Broken Docking Ring
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(5.8, 0.85, 10, 24, Math.PI * 1.45), hullMat);
+    debrisGroup.add(ring);
+
+    const pod1 = new THREE.Mesh(new THREE.BoxGeometry(4.5, 4.2, 7.5), scorchedMat);
+    pod1.position.set(1.5, -1.2, 0);
+    pod1.rotation.set(0.3, 0.5, 0.2);
+    debrisGroup.add(pod1);
+
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 10), sparkMat);
+    beacon.position.set(-3.5, 2.5, 1.0);
+    debrisGroup.add(beacon);
+  }
+
+  return debrisGroup;
+}
+
+export function createCometMesh(): THREE.Group {
+  const cometGroup = new THREE.Group();
+
+  const iceTex = getCrateredAsteroidTexture('ice');
+  const nucleusGeo = createCrateredAsteroidGeometry(5.2, 2, 42.7);
+  const nucleusMat = new THREE.MeshStandardMaterial({
+    map: iceTex.map,
+    bumpMap: iceTex.bumpMap,
+    bumpScale: 1.2,
+    color: 0xe0f2fe,
+    emissive: 0x0284c7,
+    emissiveIntensity: 0.45,
+    roughness: 0.55,
+    metalness: 0.25
+  });
+  const nucleus = new THREE.Mesh(nucleusGeo, nucleusMat);
+  cometGroup.add(nucleus);
+
+  // Glowing Cyan Coma Halo
+  const comaGeo = new THREE.SphereGeometry(8.2, 20, 20);
+  const comaMat = new THREE.MeshBasicMaterial({
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0.34,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  cometGroup.add(new THREE.Mesh(comaGeo, comaMat));
+
+  // Long Ion Tail Cone (points backward along local +Z)
+  const tailGeo = new THREE.ConeGeometry(7.2, 68, 20, 1, true);
+  tailGeo.rotateX(-Math.PI / 2);
+  tailGeo.translate(0, 0, 35);
+  const tailMat = new THREE.MeshBasicMaterial({
+    color: 0x00f0ff,
+    transparent: true,
+    opacity: 0.28,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  cometGroup.add(new THREE.Mesh(tailGeo, tailMat));
+
+  // Inner Bright Dust Tail
+  const innerTailGeo = new THREE.ConeGeometry(3.6, 44, 16, 1, true);
+  innerTailGeo.rotateX(-Math.PI / 2);
+  innerTailGeo.translate(0, 0, 23);
+  const innerTailMat = new THREE.MeshBasicMaterial({
+    color: 0xe0ffff,
+    transparent: true,
+    opacity: 0.45,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  cometGroup.add(new THREE.Mesh(innerTailGeo, innerTailMat));
+
+  cometGroup.userData = { nucleus };
+  return cometGroup;
+}
+
+// ============================================================================
+// BINTANG BERSINAR (DESTRUCTIBLE RADIANT STARS), SUPERNOVA & PECAHAN KOMET
+// ============================================================================
+
+export function createRadiantStarMesh(starData: {
+  radius?: number;
+  coreColor?: number;
+  coronaColor?: number;
+  flareColor?: number;
+}): THREE.Group {
+  const group = new THREE.Group();
+  const radius = starData.radius || 42;
+  const coreColor = starData.coreColor ?? 0xfff3a1;
+  const coronaColor = starData.coronaColor ?? 0xff7b00;
+  const flareColor = starData.flareColor ?? 0xff3b00;
+
+  // 1. Radiant Stellar Core Sphere
+  const coreGeo = new THREE.SphereGeometry(radius, 36, 36);
+  const coreMat = new THREE.MeshBasicMaterial({
+    color: coreColor
+  });
+  const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+  group.add(coreMesh);
+
+  // 2. Dual Fresnel Radiative Coronas
+  const innerCoronaGeo = new THREE.SphereGeometry(radius * 1.32, 36, 36);
+  const innerCoronaMat = createFresnelAtmosphereMaterial(coronaColor, 2.4);
+  const innerCorona = new THREE.Mesh(innerCoronaGeo, innerCoronaMat);
+  group.add(innerCorona);
+
+  const outerCoronaGeo = new THREE.SphereGeometry(radius * 1.75, 36, 36);
+  const outerCoronaMat = createFresnelAtmosphereMaterial(flareColor, 1.35);
+  const outerCorona = new THREE.Mesh(outerCoronaGeo, outerCoronaMat);
+  group.add(outerCorona);
+
+  // 3. Rotating Coronal Flare Rings (Prominences)
+  const flareLoops: THREE.Mesh[] = [];
+  [-0.35, 0.45, 1.25].forEach((rotZ, idx) => {
+    const loopGeo = new THREE.TorusGeometry(radius * (1.18 + idx * 0.12), radius * 0.08, 12, 48);
+    const loopMat = new THREE.MeshBasicMaterial({
+      color: flareColor,
+      transparent: true,
+      opacity: 0.72,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const loopMesh = new THREE.Mesh(loopGeo, loopMat);
+    loopMesh.rotation.set(idx * 0.8, idx * 0.4, rotZ);
+    group.add(loopMesh);
+    flareLoops.push(loopMesh);
+  });
+
+  group.userData = {
+    isStarCore: true,
+    coreMesh,
+    innerCorona,
+    outerCorona,
+    flareLoops
+  };
+
+  return group;
+}
+
+export function spawnSupernovaCosmicExplosionVFX(
+  fxGroup: THREE.Group,
+  vfxEntities: any[],
+  pos: THREE.Vector3
+) {
+  // 1. Ultra-Massive Expanding Chromatic Shockwave (up to 175m radius)
+  const swGeo = new THREE.SphereGeometry(3.5, 32, 24);
+  const swMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    wireframe: true,
+    transparent: true,
+    opacity: 1.0,
+    blending: THREE.AdditiveBlending
+  });
+  const swMesh = new THREE.Mesh(swGeo, swMat);
+  swMesh.position.copy(pos);
+  fxGroup.add(swMesh);
+  vfxEntities.push({
+    type: 'shockwave',
+    mesh: swMesh,
+    mat: swMat,
+    scale: 1,
+    maxScale: 52, // 3.5 * 52 = 182m
+    life: 0.95,
+    maxLife: 0.95
+  });
+
+  // 2. Secondary Ionized Violet-Cyan Plasma Ring Wave
+  const ringGeo = new THREE.TorusGeometry(5.0, 1.5, 16, 48);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0.95,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+  ringMesh.position.copy(pos);
+  ringMesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+  fxGroup.add(ringMesh);
+  vfxEntities.push({
+    type: 'fireball',
+    mesh: ringMesh,
+    mat: ringMat,
+    maxScale: 32,
+    life: 0.82,
+    maxLife: 0.82
+  });
+
+  // 3. Central Blinding Supernova Fireball Core
+  const fbGeo = new THREE.IcosahedronGeometry(8.5, 2);
+  const fbMat = new THREE.MeshBasicMaterial({
+    color: 0xffa500,
+    transparent: true,
+    opacity: 1.0,
+    blending: THREE.AdditiveBlending
+  });
+  const fbMesh = new THREE.Mesh(fbGeo, fbMat);
+  fbMesh.position.copy(pos);
+  fxGroup.add(fbMesh);
+  vfxEntities.push({
+    type: 'fireball',
+    mesh: fbMesh,
+    mat: fbMat,
+    scale: 1,
+    maxScale: 18,
+    life: 0.75,
+    maxLife: 0.75
+  });
+
+  // 4. Dispersing High-Velocity Superheated Stellar Debris
+  const chunkCount = 28;
+  for (let c = 0; c < chunkCount; c++) {
+    const dGeo = new THREE.DodecahedronGeometry(1.5 + Math.random() * 2.2, 0);
+    const dMat = new THREE.MeshBasicMaterial({
+      color: c % 3 === 0 ? 0xff4500 : c % 3 === 1 ? 0xffd700 : 0x00f0ff
+    });
+    const dMesh = new THREE.Mesh(dGeo, dMat);
+    dMesh.position.copy(pos);
+    fxGroup.add(dMesh);
+    const vel = new THREE.Vector3(
+      (Math.random() - 0.5) * 140,
+      (Math.random() - 0.5) * 140,
+      (Math.random() - 0.5) * 140
+    );
+    const rot = new THREE.Vector3(
+      Math.random() * 12,
+      Math.random() * 12,
+      Math.random() * 12
+    );
+    vfxEntities.push({
+      type: 'debris',
+      mesh: dMesh,
+      mat: dMat,
+      vel,
+      rot,
+      life: 1.2 + Math.random() * 0.8,
+      maxLife: 2.0
+    });
+  }
+}
+
+export function spawnIcyCometShatterVFX(
+  fxGroup: THREE.Group,
+  vfxEntities: any[],
+  pos: THREE.Vector3
+) {
+  // Cyan icy shockwave
+  const swGeo = new THREE.SphereGeometry(2.5, 18, 14);
+  const swMat = new THREE.MeshBasicMaterial({
+    color: 0x38bdf8,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.85,
+    blending: THREE.AdditiveBlending
+  });
+  const swMesh = new THREE.Mesh(swGeo, swMat);
+  swMesh.position.copy(pos);
+  fxGroup.add(swMesh);
+  vfxEntities.push({
+    type: 'shockwave',
+    mesh: swMesh,
+    mat: swMat,
+    scale: 1,
+    maxScale: 14,
+    life: 0.45,
+    maxLife: 0.45
+  });
+
+  // Tumbling icy crystal fragments
+  const chunkCount = 14;
+  for (let c = 0; c < chunkCount; c++) {
+    const dGeo = new THREE.OctahedronGeometry(0.8 + Math.random() * 1.2, 0);
+    const dMat = new THREE.MeshStandardMaterial({
+      color: 0xe0f2fe,
+      roughness: 0.25,
+      metalness: 0.45
+    });
+    const dMesh = new THREE.Mesh(dGeo, dMat);
+    dMesh.position.copy(pos);
+    fxGroup.add(dMesh);
+    const vel = new THREE.Vector3(
+      (Math.random() - 0.5) * 65,
+      (Math.random() - 0.5) * 65,
+      (Math.random() - 0.5) * 65
+    );
+    const rot = new THREE.Vector3(
+      Math.random() * 9,
+      Math.random() * 9,
+      Math.random() * 9
+    );
+    vfxEntities.push({
+      type: 'debris',
+      mesh: dMesh,
+      mat: dMat,
+      vel,
+      rot,
+      life: 0.85 + Math.random() * 0.5,
+      maxLife: 1.4
+    });
+  }
+}
+
 

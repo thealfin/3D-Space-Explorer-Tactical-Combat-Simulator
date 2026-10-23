@@ -16,7 +16,6 @@ import {
   Pause,
   Eye,
   EyeOff,
-  HelpCircle,
   AlertTriangle,
   CheckCircle2,
   Sparkles,
@@ -44,13 +43,18 @@ import {
 import { audioSystem } from './src/audio/soundEffects';
 import { buildSpaceshipMesh, createThrusterStream } from './src/assets3d/shipAssets';
 import { getGalaxySkyboxTexture, createSolarStarMesh } from './src/assets3d/planetAssets';
-import { spawnExplosionVFX } from './src/assets3d/destructibleAssets';
+import {
+  spawnExplosionVFX,
+  spawnSupernovaCosmicExplosionVFX,
+  spawnIcyCometShatterVFX
+} from './src/assets3d/destructibleAssets';
 import { spawnHostileFleet } from './src/assets3d/enemyAssets';
 import {
   buildOrbitalLaunchBay,
   buildCosmicEnvironment,
   buildWorldCelestialObjects,
   spawnDestructibleAsteroidBelt,
+  spawnGalaxyObstacles,
   spawnCollectibleQuantumCores
 } from './src/assets3d/spaceObjectsAssets';
 import {
@@ -79,17 +83,14 @@ export default function SpaceExplorer3D() {
   const [activeScreen, setActiveScreen] = useState('main_menu');
   const [isPaused, setIsPaused] = useState(false);
   const [cameraMode, setCameraMode] = useState('CHASE'); // 'CHASE' | 'COCKPIT' | 'CINEMATIC' | 'FREE_LOOK'
-  const [showTutorial, setShowTutorial] = useState(() =>
-    typeof window !== 'undefined' ? window.innerHeight > 540 : true
-  );
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [remappingAction, setRemappingAction] = useState<string | null>(null);
 
   // 4-Stage HUD Visibility Mode:
   // 'full'         -> All widgets + Header visible
-  // 'no_stats'     -> Left telemetry/weapons box, tutorial guide & Header hidden (HUD: MIN)
-  // 'no_stats_map' -> Left telemetry/weapons box, tutorial guide, Header & Tactical Radar hidden (HUD: NO MAP)
-  // 'full_hide'    -> Full hide including Header (only Pause, ? & HUD/Fullscreen controls remain)
+  // 'no_stats'     -> Left telemetry/weapons box & Header hidden (HUD: MIN)
+  // 'no_stats_map' -> Left telemetry/weapons box, Header & Tactical Radar hidden (HUD: NO MAP)
+  // 'full_hide'    -> Full hide including Header (only Pause & HUD/Fullscreen controls remain)
   const [hudMode, setHudMode] = useState<'full' | 'no_stats' | 'no_stats_map' | 'full_hide'>('full');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobileLandscape, setIsMobileLandscape] = useState(() =>
@@ -275,6 +276,7 @@ export default function SpaceExplorer3D() {
     position: new THREE.Vector3(0, 8, 45),
     quaternion: new THREE.Quaternion(),
     velocity: new THREE.Vector3(),
+    knockbackVelocity: new THREE.Vector3(0, 0, 0),
     speed: 35,
     throttle: 0.35,
     angularVel: new THREE.Vector3(0, 0, 0),
@@ -524,13 +526,13 @@ export default function SpaceExplorer3D() {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x040711);
-    scene.fog = new THREE.FogExp2(0x040711, 0.00048);
+    scene.fog = new THREE.FogExp2(0x040711, 0.00018);
 
     const camera = new THREE.PerspectiveCamera(
       simRef.current.settings.fov || 68,
       container.clientWidth / Math.max(1, container.clientHeight),
       0.5,
-      3600
+      6800
     );
 
     let renderer: THREE.WebGLRenderer;
@@ -588,7 +590,7 @@ export default function SpaceExplorer3D() {
     const ambientLight = new THREE.AmbientLight(0x1e2f4d, 0.95);
     scene.add(ambientLight);
 
-    const galaxySkyGeo = new THREE.SphereGeometry(3200, 48, 32);
+    const galaxySkyGeo = new THREE.SphereGeometry(5600, 48, 32);
     const galaxySkyMat = new THREE.MeshBasicMaterial({
       map: getGalaxySkyboxTexture(),
       side: THREE.BackSide,
@@ -602,7 +604,7 @@ export default function SpaceExplorer3D() {
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 10;
-    sunLight.shadow.camera.far = 2200;
+    sunLight.shadow.camera.far = 3200;
     scene.add(sunLight);
 
     const cyanRimLight = new THREE.DirectionalLight(0x00d2ff, 1.15);
@@ -612,13 +614,14 @@ export default function SpaceExplorer3D() {
     const sunMesh = createSolarStarMesh(sunLight.position);
     scene.add(sunMesh);
 
-    // Modular 3D Environment, Orbital Launch Bay, Planets, Stations, Asteroids & Fleet
+    // Modular 3D Environment, Orbital Launch Bay, Planets, Stations, Asteroids, Obstacles & Fleet
     const launchBayGroup = buildOrbitalLaunchBay(scene);
     const { nebulaClouds, spaceDust, dustGeo, dustBoxRange } = buildCosmicEnvironment(scene);
     const worldMeshes = buildWorldCelestialObjects(scene, WORLD_OBJECTS);
-    const { interactiveAsteroids } = spawnDestructibleAsteroidBelt(scene, 85);
+    const { interactiveAsteroids } = spawnDestructibleAsteroidBelt(scene, 155);
+    const { spaceMines, derelictDebris, activeComets, destructibleStars } = spawnGalaxyObstacles(scene);
     const { enemyFighters, battleshipMesh, warpPortalMesh } = spawnHostileFleet(scene);
-    const { freeCores } = spawnCollectibleQuantumCores(scene, 15);
+    const { freeCores } = spawnCollectibleQuantumCores(scene, 18);
 
     // Player Spaceship Container
     const shipAnchor = new THREE.Group();
@@ -954,12 +957,18 @@ export default function SpaceExplorer3D() {
         bloomPass.enabled = Boolean(s.settings.bloomEnabled && s.settings.graphicsQuality !== 'Low');
       }
 
-      // Rotate Celestial Objects & Cloud Layers
+      // Rotate Celestial Objects, Cloud Layers, Orbiting Moons & Black Hole Accretion Disk
       worldMeshes.forEach((wm) => {
         wm.group.rotation.y += wm.data.rotationSpeed * dt;
         wm.group.children.forEach((child) => {
           if (child.userData?.isCloudLayer) {
             child.rotation.y += wm.data.rotationSpeed * 0.45 * dt;
+          } else if (child.userData?.isMoonOrbit) {
+            child.rotation.y += (child.userData.orbitSpeed || 0.3) * dt;
+          } else if (child.userData?.isAccretionDisk) {
+            child.rotation.z -= 0.42 * dt;
+          } else if (child.userData?.isPhotonRing) {
+            child.rotation.z += 0.65 * dt;
           }
         });
       });
@@ -1109,6 +1118,119 @@ export default function SpaceExplorer3D() {
               awardCombatScore(50, 35, 20, 'asteroidsDestroyed');
             }
             break;
+          }
+        }
+
+        // 1b. Check Proximity EMP Space Mines
+        if (!hitSomething) {
+          for (let m = 0; m < spaceMines.length; m++) {
+            const mine = spaceMines[m];
+            if (!mine.alive) continue;
+            const dist = p.mesh.position.distanceTo(mine.mesh.position);
+            if (dist < mine.radius + p.radius) {
+              hitSomething = true;
+              mine.health -= p.damage;
+              audioSystem.playHitSpark();
+              spawnExplosion(p.mesh.position, false);
+              if (mine.health <= 0) {
+                mine.alive = false;
+                mine.mesh.visible = false;
+                spawnExplosion(mine.mesh.position, true);
+                triggerToast('EMP PROXIMITY MINE CLEARED', '+120 PTS // +75 Credits // +45 XP', 'success');
+                awardCombatScore(120, 75, 45, 'enemiesDestroyed');
+              }
+              break;
+            }
+          }
+        }
+
+        // 1c. Check Derelict Satellite & Ship Wreckage Debris
+        if (!hitSomething) {
+          for (let d = 0; d < derelictDebris.length; d++) {
+            const deb = derelictDebris[d];
+            if (!deb.alive) continue;
+            const dist = p.mesh.position.distanceTo(deb.mesh.position);
+            if (dist < deb.radius + p.radius) {
+              hitSomething = true;
+              deb.health -= p.damage;
+              audioSystem.playHitSpark();
+              spawnExplosion(p.mesh.position, false);
+              if (deb.health <= 0) {
+                deb.alive = false;
+                deb.mesh.visible = false;
+                spawnExplosion(deb.mesh.position, true);
+                triggerToast('DERELICT SALVAGE RECLAIMED', '+90 PTS // +60 Credits // +35 XP', 'info');
+                awardCombatScore(90, 60, 35, 'asteroidsDestroyed');
+              }
+              break;
+            }
+          }
+        }
+
+        // 1d. Check Active Icy Comets (Bisa Ditembak & Hancur Berkeping)
+        if (!hitSomething) {
+          for (let c = 0; c < activeComets.length; c++) {
+            const comet = activeComets[c];
+            if (!comet.alive) continue;
+            const dist = p.mesh.position.distanceTo(comet.mesh.position);
+            if (dist < comet.radius + p.radius) {
+              hitSomething = true;
+              comet.health -= p.damage;
+              audioSystem.playHitSpark();
+              spawnExplosion(p.mesh.position, false);
+              if (comet.health <= 0) {
+                comet.alive = false;
+                comet.mesh.visible = false;
+                spawnIcyCometShatterVFX(fxGroup, vfxEntities, comet.mesh.position);
+                spawnExplosion(comet.mesh.position, true);
+                triggerToast(`COMET SHATTERED: ${comet.name}`, '+150 PTS // +100 Credits // +60 XP', 'info');
+                awardCombatScore(150, 100, 60, 'asteroidsDestroyed');
+              }
+              break;
+            }
+          }
+        }
+
+        // 1e. Check Destructible Radiant Stars (Bintang Bersinar, Ledakan Kosmik & Knockback)
+        if (!hitSomething) {
+          for (let st = 0; st < destructibleStars.length; st++) {
+            const star = destructibleStars[st];
+            if (!star.alive) continue;
+            const dist = p.mesh.position.distanceTo(star.position);
+            if (dist < star.radius + p.radius) {
+              hitSomething = true;
+              star.health -= p.damage;
+              audioSystem.playHitSpark();
+              spawnExplosion(p.mesh.position, false);
+
+              if (star.health <= 0) {
+                star.alive = false;
+                star.mesh.visible = false;
+                spawnSupernovaCosmicExplosionVFX(fxGroup, vfxEntities, star.position);
+                audioSystem.playSupernovaCosmicExplosion();
+
+                // Hitung Efek Knockback Kosmik ke Pesawat Pemain
+                const distToShip = s.position.distanceTo(star.position);
+                const blastRadius = 380;
+                if (distToShip < blastRadius) {
+                  const knockDir = s.position.clone().sub(star.position).normalize();
+                  if (knockDir.lengthSq() < 0.001) knockDir.set(0, 0, 1);
+                  const intensity = 1 - (distToShip / blastRadius);
+                  const impulse = 290 * intensity;
+                  s.knockbackVelocity.copy(knockDir).multiplyScalar(impulse);
+                  s.speed = Math.max(s.speed, impulse * 0.72);
+                  s.cameraShake = Math.min(2.0, s.cameraShake + 1.45 * intensity);
+                  s.shieldCurrent = Math.max(0, s.shieldCurrent - 55 * intensity);
+                  s.shieldFlash = 1.0;
+                  s.damageVignetteTimer = 1.0;
+                  triggerToast('⚠️ COSMIC SUPERNOVA DETONATED!', 'Supernova blast shockwave knocked ship back!', 'danger');
+                } else {
+                  triggerToast(`STELLAR SUPERNOVA: ${star.name}`, '+1,200 PTS // Stellar Core Cleared', 'success');
+                }
+                awardCombatScore(1200, 650, 400, 'enemiesDestroyed');
+              }
+              break;
+            }
           }
         }
 
@@ -1419,6 +1541,19 @@ export default function SpaceExplorer3D() {
           closestObj = wo;
         }
 
+        // Black Hole Gravitational Pull Attraction
+        if (wo.category === 'black_hole') {
+          const pullRadius = wo.interactionRadius * 1.55; // ~480m - 520m
+          const minHorizon = wo.radius * 0.72;
+          if (dist < pullRadius && dist > minHorizon) {
+            const pullDir = objPos.clone().sub(s.position).normalize();
+            const pullIntensity = Math.pow(1 - (dist / pullRadius), 1.7);
+            const pullSpeed = 62 * pullIntensity;
+            s.position.addScaledVector(pullDir, pullSpeed * dt);
+            s.cameraShake = Math.max(s.cameraShake, pullIntensity * 0.85);
+          }
+        }
+
         const minSafeDist = wo.radius + 5.5;
         if (dist < minSafeDist) {
           const pushDir = s.position.clone().sub(objPos).normalize();
@@ -1436,6 +1571,9 @@ export default function SpaceExplorer3D() {
         if (!ast.alive) continue;
         ast.mesh.rotation.x += ast.rotSpeed.x * dt;
         ast.mesh.rotation.y += ast.rotSpeed.y * dt;
+        if (ast.vel) {
+          ast.mesh.position.addScaledVector(ast.vel, dt);
+        }
 
         const dist = s.position.distanceTo(ast.mesh.position);
         const minSafeDist = ast.radius + 3.2;
@@ -1447,6 +1585,116 @@ export default function SpaceExplorer3D() {
           s.shieldFlash = 1.0;
           s.damageVignetteTimer = 0.4;
           s.cameraShake = 0.55;
+          audioSystem.playCollision();
+          break;
+        }
+      }
+
+      // Update & Check Proximity EMP Space Mines
+      for (let i = 0; i < spaceMines.length; i++) {
+        const mine = spaceMines[i];
+        if (!mine.alive) continue;
+        mine.mesh.rotation.y += 0.65 * dt;
+        if (mine.mesh.userData?.aura) {
+          const pulse = 1.0 + Math.sin(now * 0.008 + mine.phase) * 0.22;
+          mine.mesh.userData.aura.scale.setScalar(pulse);
+        }
+
+        const dist = s.position.distanceTo(mine.mesh.position);
+        if (dist < mine.triggerRadius) {
+          mine.alive = false;
+          mine.mesh.visible = false;
+          spawnExplosion(mine.mesh.position, true);
+          s.shieldCurrent = Math.max(5, s.shieldCurrent - 32);
+          s.boostEnergy = Math.max(0, s.boostEnergy - 35);
+          s.speed *= 0.55;
+          s.shieldFlash = 1.0;
+          s.damageVignetteTimer = 0.65;
+          s.cameraShake = 0.85;
+          audioSystem.playCollision();
+          triggerToast('EMP PROXIMITY MINE DETONATED!', 'Shield & Warp Capacitor disrupted — shoot mines from afar!', 'danger');
+          break;
+        }
+      }
+
+      // Update & Check Derelict Ship Hulks / Satellite Wreckage
+      for (let i = 0; i < derelictDebris.length; i++) {
+        const deb = derelictDebris[i];
+        if (!deb.alive) continue;
+        deb.mesh.rotation.x += deb.rotSpeed.x * dt;
+        deb.mesh.rotation.y += deb.rotSpeed.y * dt;
+        deb.mesh.rotation.z += deb.rotSpeed.z * dt;
+
+        const dist = s.position.distanceTo(deb.mesh.position);
+        const minSafeDist = deb.radius + 3.2;
+        if (dist < minSafeDist) {
+          const pushDir = s.position.clone().sub(deb.mesh.position).normalize();
+          s.position.copy(deb.mesh.position).addScaledVector(pushDir, minSafeDist + 2.2);
+          s.speed *= 0.48;
+          s.shieldCurrent = Math.max(5, s.shieldCurrent - 20);
+          s.shieldFlash = 1.0;
+          s.damageVignetteTimer = 0.45;
+          s.cameraShake = 0.6;
+          audioSystem.playCollision();
+          break;
+        }
+      }
+
+      // Update & Check Active Comets (14+ Dynamic Comets Moving Relatif Satu Sama Lain)
+      for (let i = 0; i < activeComets.length; i++) {
+        const comet = activeComets[i];
+        if (!comet.alive) continue;
+        comet.mesh.position.addScaledVector(comet.vel, dt);
+        if (comet.mesh.userData?.nucleus) {
+          comet.mesh.userData.nucleus.rotation.x += 0.9 * dt;
+          comet.mesh.userData.nucleus.rotation.y += 1.2 * dt;
+        }
+        // Loop comet back to origin when it travels far across the Solar System
+        if (comet.mesh.position.distanceTo(comet.origin) > 1850) {
+          comet.mesh.position.copy(comet.origin);
+        }
+
+        const dist = s.position.distanceTo(comet.mesh.position);
+        const minSafeDist = comet.radius + 3.5;
+        if (dist < minSafeDist) {
+          const pushDir = s.position.clone().sub(comet.mesh.position).normalize();
+          s.position.copy(comet.mesh.position).addScaledVector(pushDir, minSafeDist + 2.5);
+          s.speed *= 0.5;
+          s.shieldCurrent = Math.max(5, s.shieldCurrent - 22);
+          s.shieldFlash = 1.0;
+          s.damageVignetteTimer = 0.5;
+          s.cameraShake = 0.65;
+          audioSystem.playCollision();
+          break;
+        }
+      }
+
+      // Update & Animate Destructible Radiant Stars (Bintang Bersinar)
+      for (let i = 0; i < destructibleStars.length; i++) {
+        const star = destructibleStars[i];
+        if (!star.alive) continue;
+        star.mesh.rotation.y += 0.28 * dt;
+
+        if (star.mesh.userData?.flareLoops) {
+          star.mesh.userData.flareLoops.forEach((loop: THREE.Mesh, lIdx: number) => {
+            loop.rotation.z += (0.45 + lIdx * 0.25) * dt;
+          });
+        }
+        if (star.mesh.userData?.outerCorona) {
+          const pulse = 1.0 + Math.sin(now * 0.005 + star.pulsePhase) * 0.12;
+          star.mesh.userData.outerCorona.scale.setScalar(pulse);
+        }
+
+        const dist = s.position.distanceTo(star.position);
+        const minSafeDist = star.radius + 4.0;
+        if (dist < minSafeDist) {
+          const pushDir = s.position.clone().sub(star.position).normalize();
+          s.position.copy(star.position).addScaledVector(pushDir, minSafeDist + 3.0);
+          s.speed *= 0.42;
+          s.shieldCurrent = Math.max(0, s.shieldCurrent - 32);
+          s.shieldFlash = 1.0;
+          s.damageVignetteTimer = 0.6;
+          s.cameraShake = 0.85;
           audioSystem.playCollision();
           break;
         }
@@ -1696,6 +1944,82 @@ export default function SpaceExplorer3D() {
       }
 
       if (!bestTarget) {
+        spaceMines.forEach((mine) => {
+          if (!mine.alive) return;
+          const dir = mine.mesh.position.clone().sub(s.position).normalize();
+          const dot = forwardVec.dot(dir);
+          const dist = s.position.distanceTo(mine.mesh.position);
+          if (dot > bestDot && dist < 300) {
+            bestDot = dot;
+            bestTarget = {
+              pos: mine.mesh.position,
+              name: mine.name,
+              health: mine.health,
+              maxHealth: mine.maxHealth,
+              dist
+            };
+          }
+        });
+      }
+
+      if (!bestTarget) {
+        destructibleStars.forEach((star) => {
+          if (!star.alive) return;
+          const dir = star.position.clone().sub(s.position).normalize();
+          const dot = forwardVec.dot(dir);
+          const dist = s.position.distanceTo(star.position);
+          if (dot > bestDot && dist < 480) {
+            bestDot = dot;
+            bestTarget = {
+              pos: star.position,
+              name: star.name,
+              health: star.health,
+              maxHealth: star.maxHealth,
+              dist
+            };
+          }
+        });
+      }
+
+      if (!bestTarget) {
+        activeComets.forEach((comet) => {
+          if (!comet.alive) return;
+          const dir = comet.mesh.position.clone().sub(s.position).normalize();
+          const dot = forwardVec.dot(dir);
+          const dist = s.position.distanceTo(comet.mesh.position);
+          if (dot > bestDot && dist < 360) {
+            bestDot = dot;
+            bestTarget = {
+              pos: comet.mesh.position,
+              name: comet.name,
+              health: comet.health,
+              maxHealth: comet.maxHealth,
+              dist
+            };
+          }
+        });
+      }
+
+      if (!bestTarget) {
+        derelictDebris.forEach((deb) => {
+          if (!deb.alive) return;
+          const dir = deb.mesh.position.clone().sub(s.position).normalize();
+          const dot = forwardVec.dot(dir);
+          const dist = s.position.distanceTo(deb.mesh.position);
+          if (dot > bestDot && dist < 280) {
+            bestDot = dot;
+            bestTarget = {
+              pos: deb.mesh.position,
+              name: deb.name,
+              health: deb.health,
+              maxHealth: deb.maxHealth,
+              dist
+            };
+          }
+        });
+      }
+
+      if (!bestTarget) {
         interactiveAsteroids.forEach((ast) => {
           if (!ast.alive) return;
           const dir = ast.mesh.position.clone().sub(s.position).normalize();
@@ -1814,7 +2138,15 @@ export default function SpaceExplorer3D() {
       }
 
       // Draw 2D Tactical Radar
-      renderTacticalRadar(radarCanvasRef.current, s, forwardVec, missionMeshes);
+      renderTacticalRadar(
+        radarCanvasRef.current,
+        s,
+        forwardVec,
+        missionMeshes,
+        spaceMines,
+        activeComets,
+        destructibleStars
+      );
 
       renderScene();
     };
@@ -2389,21 +2721,6 @@ export default function SpaceExplorer3D() {
                 )}
               </button>
 
-              {/* Help / Controls Guide Button (?) - Hidden in HUD: MIN ('no_stats') & HUD: NO MAP ('no_stats_map') */}
-              <button
-                onClick={() => {
-                  audioSystem.playUIClick();
-                  setShowTutorial((t) => !t);
-                }}
-                className={`p-2 rounded-xl border backdrop-blur-md cursor-pointer ${
-                  hudMode === 'no_stats' || hudMode === 'no_stats_map' ? 'hidden' : 'flex'
-                }`}
-                style={{ backgroundColor: 'rgba(13, 20, 40, 0.8)', borderColor: 'rgba(154, 168, 199, 0.25)' }}
-                title="Toggle Flight Controls Guide"
-              >
-                <HelpCircle className="w-4 h-4" style={{ color: '#9AA8C7' }} />
-              </button>
-
               {/* Pause Button - Always visible in all 4 modes */}
               <button
                 onClick={() => {
@@ -2631,48 +2948,8 @@ export default function SpaceExplorer3D() {
               </div>
             </div>
 
-            {/* Center: Interactive Tutorial & Analog / Movement Flight Pad */}
+            {/* Center: Analog / Movement Flight Pad */}
             <div className="flex flex-col items-center gap-2 pointer-events-auto mx-auto shrink-0">
-              {/* Tutorial / Controls Guide Bar: Hidden when in HUD: MIN ('no_stats'), HUD: NO MAP ('no_stats_map'), or 'full_hide' */}
-              {showTutorial && hudMode === 'full' && (
-                <div
-                  className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 px-3.5 py-2 rounded-xl border backdrop-blur-md text-[11px] sm:text-xs max-w-xl"
-                  style={{
-                    backgroundColor: 'rgba(13, 20, 40, 0.86)',
-                    borderColor: 'rgba(154,168,199,0.2)',
-                    color: '#9AA8C7'
-                  }}
-                >
-                  <span>
-                    <strong className="text-white">W/S</strong> Pitch
-                  </span>
-                  <span>
-                    <strong className="text-white">A/D</strong> Yaw
-                  </span>
-                  <span>
-                    <strong className="text-white">Q/E</strong> Roll
-                  </span>
-                  <span>
-                    <strong className="text-white">SWIPE SCREEN</strong> Steer
-                  </span>
-                  <span>
-                    <strong className="text-white">SHIFT</strong> Boost
-                  </span>
-                  <span>
-                    <strong className="text-white">CTRL</strong> Brake
-                  </span>
-                  <span>
-                    <strong className="text-white">SPACE / LMB</strong> Fire
-                  </span>
-                  <span>
-                    <strong className="text-white">G / RMB</strong> Torpedo
-                  </span>
-                  <span>
-                    <strong className="text-white">H</strong> HUD Mode
-                  </span>
-                </div>
-              )}
-
               {/* Touch / On-Screen Flight Controls (Kept at 100% size on Mobile Landscape; hidden only in 'full_hide') */}
               <div className={`items-center gap-2 ${hudMode === 'full_hide' ? 'hidden' : 'flex'}`}>
                 <div
@@ -2799,7 +3076,7 @@ export default function SpaceExplorer3D() {
                 className="text-[10px] font-mono uppercase tracking-wider mb-1.5 flex items-center gap-1.5"
                 style={{ color: '#49D9FF' }}
               >
-                <Navigation className="w-3 h-3" /> TACTICAL RADAR (850M)
+                <Navigation className="w-3 h-3" /> TACTICAL RADAR (1450M)
               </div>
               <canvas
                 ref={radarCanvasRef}

@@ -213,6 +213,57 @@ export class SpaceAudioSystem {
     } catch {}
   }
 
+  playSupernovaCosmicExplosion() {
+    this.resume();
+    if (!this.initialized || !this.ctx || this.settings.muted) return;
+    try {
+      const now = this.ctx.currentTime;
+      const duration = 2.4;
+      const sampleRate = this.ctx.sampleRate;
+      const buffer = this.ctx.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-2.2 * (i / data.length));
+      }
+
+      const noiseSource = this.ctx.createBufferSource();
+      noiseSource.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(680, now);
+      filter.frequency.exponentialRampToValueAtTime(28, now + duration);
+
+      const gain = this.ctx.createGain();
+      const vol = this.settings.masterVolume * this.settings.sfxVolume * 0.75;
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      noiseSource.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      noiseSource.start(now);
+
+      // Deep celestial sub-bass seismic impact
+      const sub = this.ctx.createOscillator();
+      const subGain = this.ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(65, now);
+      sub.frequency.exponentialRampToValueAtTime(14, now + 1.6);
+      subGain.gain.setValueAtTime(vol * 1.2, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+      sub.connect(subGain);
+      subGain.connect(this.ctx.destination);
+      sub.start(now);
+      sub.stop(now + 1.6);
+
+      // Celestial resonant harmonic ring
+      setTimeout(() => {
+        this.playTone(880, 220, 1.2, 'sine', 0.28);
+      }, 150);
+    } catch {}
+  }
+
   playCheckpoint() {
     this.playTone(523.25, 1046.5, 0.24, 'triangle', 0.22);
   }

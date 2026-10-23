@@ -195,6 +195,13 @@ export function updateFlightPhysicsStep(
 
   forwardVec.set(0, 0, -1).applyQuaternion(s.quaternion);
   s.velocity.copy(forwardVec).multiplyScalar(s.speed);
+
+  // Apply Supernova Cosmic Explosion Knockback Impulse
+  if (s.knockbackVelocity && s.knockbackVelocity.lengthSq() > 0.05) {
+    s.position.addScaledVector(s.knockbackVelocity, dt);
+    s.knockbackVelocity.lerp(new THREE.Vector3(0, 0, 0), Math.min(1, dt * 3.6));
+  }
+
   const stepDist = s.speed * dt;
   s.position.addScaledVector(forwardVec, stepDist);
   s.sessionDistance += stepDist;
@@ -248,7 +255,10 @@ export function renderTacticalRadar(
   rCanvas: HTMLCanvasElement | null,
   s: any,
   forwardVec: THREE.Vector3,
-  missionMeshes: THREE.Object3D[]
+  missionMeshes: THREE.Object3D[],
+  spaceMines?: any[],
+  activeComets?: any[],
+  destructibleStars?: any[]
 ) {
   if (!rCanvas) return;
   const rCtx = rCanvas.getContext('2d');
@@ -258,7 +268,7 @@ export function renderTacticalRadar(
   const hSize = rCanvas.height;
   const cx = w / 2;
   const cy = hSize / 2;
-  const radarRange = 850;
+  const radarRange = 1450;
 
   rCtx.clearRect(0, 0, w, hSize);
   rCtx.strokeStyle = 'rgba(73, 217, 255, 0.22)';
@@ -287,12 +297,74 @@ export function renderTacticalRadar(
     const px = cx + (rx / radarRange) * (w * 0.45);
     const py = cy + (rz / radarRange) * (hSize * 0.45);
     if (Math.hypot(px - cx, py - cy) < w * 0.46) {
-      rCtx.fillStyle = wo.category === 'station' ? '#48E0A4' : wo.zoneType.includes('HAZARD') ? '#FF5D73' : '#49D9FF';
+      rCtx.fillStyle =
+        wo.category === 'black_hole'
+          ? '#C084FC'
+          : wo.category === 'station'
+          ? '#48E0A4'
+          : wo.zoneType.includes('HAZARD')
+          ? '#FF5D73'
+          : '#49D9FF';
       rCtx.beginPath();
-      rCtx.arc(px, py, wo.category === 'planet' ? 4.2 : 3, 0, Math.PI * 2);
+      rCtx.arc(px, py, wo.category === 'black_hole' ? 5.2 : wo.category === 'planet' ? 4.0 : 3, 0, Math.PI * 2);
       rCtx.fill();
     }
   });
+
+  if (spaceMines) {
+    rCtx.fillStyle = 'rgba(255, 65, 95, 0.85)';
+    spaceMines.forEach((m) => {
+      if (!m.alive) return;
+      const dx = m.mesh.position.x - s.position.x;
+      const dz = m.mesh.position.z - s.position.z;
+      const rx = dx * Math.cos(-yawAngle) - dz * Math.sin(-yawAngle);
+      const rz = dx * Math.sin(-yawAngle) + dz * Math.cos(-yawAngle);
+      const px = cx + (rx / radarRange) * (w * 0.45);
+      const py = cy + (rz / radarRange) * (hSize * 0.45);
+      if (Math.hypot(px - cx, py - cy) < w * 0.45) {
+        rCtx.fillRect(px - 1.2, py - 1.2, 2.4, 2.4);
+      }
+    });
+  }
+
+  if (activeComets) {
+    rCtx.fillStyle = '#38BDF8';
+    activeComets.forEach((c) => {
+      if (!c.alive) return;
+      const dx = c.mesh.position.x - s.position.x;
+      const dz = c.mesh.position.z - s.position.z;
+      const rx = dx * Math.cos(-yawAngle) - dz * Math.sin(-yawAngle);
+      const rz = dx * Math.sin(-yawAngle) + dz * Math.cos(-yawAngle);
+      const px = cx + (rx / radarRange) * (w * 0.45);
+      const py = cy + (rz / radarRange) * (hSize * 0.45);
+      if (Math.hypot(px - cx, py - cy) < w * 0.45) {
+        rCtx.beginPath();
+        rCtx.arc(px, py, 2.5, 0, Math.PI * 2);
+        rCtx.fill();
+      }
+    });
+  }
+
+  if (destructibleStars) {
+    destructibleStars.forEach((star) => {
+      if (!star.alive) return;
+      const dx = star.position.x - s.position.x;
+      const dz = star.position.z - s.position.z;
+      const rx = dx * Math.cos(-yawAngle) - dz * Math.sin(-yawAngle);
+      const rz = dx * Math.sin(-yawAngle) + dz * Math.cos(-yawAngle);
+      const px = cx + (rx / radarRange) * (w * 0.45);
+      const py = cy + (rz / radarRange) * (hSize * 0.45);
+      if (Math.hypot(px - cx, py - cy) < w * 0.45) {
+        rCtx.fillStyle = '#FDE047';
+        rCtx.beginPath();
+        rCtx.arc(px, py, 4.2, 0, Math.PI * 2);
+        rCtx.fill();
+        rCtx.strokeStyle = '#F59E0B';
+        rCtx.lineWidth = 1.2;
+        rCtx.stroke();
+      }
+    });
+  }
 
   if (s.mission && missionMeshes[s.missionIndex]) {
     const mp = missionMeshes[s.missionIndex].position;
