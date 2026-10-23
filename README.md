@@ -83,14 +83,30 @@ Terdapat **7 lokasi utama** yang dapat ditemukan dan dipindai menggunakan *Telem
 
 ---
 
-## 📂 Struktur Direktori
+## 📂 Struktur Direktori (Arsitektur Modular)
 
 ```text
 Game Space 3D/
 ├── src/
+│   ├── assets3d/                # Komponen Aset 3D Prosedural & Shaders
+│   │   ├── shipAssets.ts        # Mesh pesawat pemain, decal Corsair, hull greeble & thruster trails
+│   │   ├── planetAssets.ts      # Tekstur planet 2K, awan, shader atmosfer Fresnel & skybox galaksi
+│   │   ├── destructibleAssets.ts# Asteroid berkawah, proyektil 3D, muzzle flash, ledakan & warp portal
+│   │   ├── enemyAssets.ts       # Pesawat tempur musuh (Wraith/Aegis) & kapal induk Dreadnought Kronos
+│   │   └── spaceObjectsAssets.ts# Stasiun Krios, Chronos Anomaly, Orbital Launch Bay, sabuk asteroid & nebula
+│   ├── data/
+│   │   └── playerData.ts        # Katalog pesawat/planet/misi, data pemain, poin tempur, high score & persistensi
+│   ├── audio/
+│   │   └── soundEffects.ts      # Synthesizer efek suara real-time (Web Audio API)
+│   ├── physics/
+│   │   └── gamePhysics.ts       # Fisika terbang 6-DOF, kemudi geser layar (Touch-Drag), AI tempur & radar
+│   ├── components/
+│   │   ├── PreLaunchUI.tsx      # Antarmuka Pre-Launch Deck, Planetary Scanner, Hangar, Missions & Modals
+│   │   ├── PlayerProfileUI.tsx  # Profil Pilot, Skor Tempur, High Score, Achievements & Exploration Codex
+│   │   └── SettingsUI.tsx       # Pengaturan Grafis, Audio, Sensitivitas Geser Layar Mobile & Keybindings
 │   ├── main.tsx                 # Entry point React DOM
-│   └── index.css                # Konfigurasi Tailwind CSS & custom styling
-├── space_explorer_3d.tsx        # Komponen utama: Engine 3D, Shaders, Fisika, Combat, Audio & UI
+│   └── index.css                # Konfigurasi Tailwind CSS & aturan responsif Mobile Landscape
+├── space_explorer_3d.tsx        # Orkestrator utama: Scene WebGL, HUD Penerbangan & State Permainan
 ├── index.html                   # Template HTML utama
 ├── package.json                 # Daftar dependensi dan script proyek
 ├── tsconfig.json                # Konfigurasi TypeScript
@@ -142,6 +158,7 @@ Pastikan **Node.js** (v18+) dan **pnpm** sudah terpasang di perangkat Anda.
 | **`1` / `2` / `3`** | Ganti Senjata (`[1] CANNON`, `[2] PLASMA`, `[3] TORP`) |
 | **`F` (Tahan)** | Pindai Benda Langit / Stasiun (*Telemetry Scan*) saat berada dalam jarak sensor |
 | **`C`** | Ganti Mode Kamera (*Chase Cam* / *Cockpit Cam* / *Cinematic Orbit Cam* / *Free Look*) |
-| **`H` / `Tab`** | Ganti Mode Visibilitas HUD (4 Mode: *Full* → *Hide Stats & Header* → *Hide Map* → *Full Hide*) |
+| **`H` / `Tab`** | Ganti Mode Visibilitas HUD (4 Mode: *Full* → *HUD: MIN* → *HUD: NO MAP* → *Full Hide*) |
 | **`P` / `Esc`** | Jeda Permainan (*Pause Menu*) |
+| **Geser Layar (Mobile Touch-Drag / Swipe)** | Mengarahkan moncong pesawat (*Pitch & Yaw* + *Roll Banking*) secara mulus ala Roblox / FPS Mobile (mendukung *multi-touch* bersamaan dengan tombol *FIRE/BOOST*) |
 | **Drag Mouse di Kanvas** | Mengarahkan Pandangan & Reticle Bidikan (*Free-Look & Aim Steering*) |
